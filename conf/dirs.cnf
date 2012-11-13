@@ -1,0 +1,18 @@
+[mysqld]
+user                           = <%= myUser %>
+server-id                      = <%= myID %>
+datadir                        = /home/rbensley/db/data/<%= myData %>
+basedir                        = /home/rbensley/db/versions/<%= myVersion %>
+socket                         = /home/rbensley/db/data/<%= myData %>/mysql.sock
+pid_file                       = /home/rbensley/db/data/<%= myData %>/mysql.pid
+log-bin                        = /home/rbensley/db/data/<%= myData %>/mysql-log-bin
+log-bin-index                  = /home/rbensley/db/data/<%= myData %>/mysql-log-bin.index
+log_error                      = /home/rbensley/db/data/<%= myData %>/error.log
+slow_query_log_file            = /home/rbensley/db/data/<%= myData %>/slow.log
+tmpdir                         = <%= myTmpDir %>
+
+% cnfIncludes.each do |cnf|
+
+!include <%= cnf %>
+
+% end
