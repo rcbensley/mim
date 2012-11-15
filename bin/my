@@ -31,13 +31,6 @@ if ARGV.length == 0
 end
 
 
-directoryDB = `echo $DBDIR`.strip
-directoryBin = File.expand_path File.dirname(__FILE__)
-directoryConf = "#{directoryDB}/conf"
-directoryData = "#{directoryDB}/data"
-directoryVersion = "#{directoryDB}/versions"
-directoryCurrent = "#{directoryVersion}/mysql"
-
 opts = GetoptLong.new(
   ["--help","",],
   ["","",],
@@ -47,3 +40,7 @@ opts = GetoptLong.new(
   ["","",],
   ["","",]
 )
+
+def start
+
+end
