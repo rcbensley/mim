@@ -1,0 +1,33 @@
+#!/usr/bin/env ruby
+
+require 'erb'
+
+class buildConfig(name, id, port)
+# name, user, id, basedir, tmpdir, port
+  user = ENV['USER']
+  servers = "#{directoryCONF}/servers"
+  basedir = directoryCurrent
+
+  def initialiaze(name)
+    @servers = []
+    @name  = name
+    @user = user
+    @id = id
+    @basedir = basedir
+    @port = port
+  end
+
+  def self.getServers(servers)
+    if File.exists?(servers) && File.file?(servers)
+      serversFile = File.open(servers, 'r')
+      serversFile.eachline do |line|
+        @servers << line.split(",").each{|value| value.strip!}
+      end
+    end
+  end
+
+end
+
+def start
+
+end

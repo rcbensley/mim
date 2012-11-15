@@ -1,0 +1,49 @@
+#!/usr/bin/env ruby
+
+require 'mysql'
+require 'getoptlong'
+
+def usage
+  puts <<- EOF
+
+  Available commands:
+
+    build, build an instance config from the templates in conf/
+
+    start, start an instance
+
+    stop, stop an instance
+
+    status, show the running status of all instance(s)
+
+    stop-all, cleanly shutdown all instances, tables are flushed.
+
+    stop-fast, shutdown all instances
+    
+    go, send a concurrent command to all instances
+
+  EOF
+  exit 1
+end
+
+if ARGV.length == 0
+  usage
+end
+
+
+directoryDB = `echo $DBDIR`.strip
+directoryBin = File.expand_path File.dirname(__FILE__)
+directoryConf = "#{directoryDB}/conf"
+directoryData = "#{directoryDB}/data"
+directoryVersion = "#{directoryDB}/versions"
+directoryCurrent = "#{directoryVersion}/mysql"
+
+opts = GetoptLong.new(
+  ["--help","",],
+  ["","",],
+  ["","",],
+  ["","",],
+  ["","",],
+  ["","",],
+  ["","",]
+)
