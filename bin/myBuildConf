@@ -4,63 +4,15 @@ require 'erb'
 
 directoryDB = `echo $DBDIR`.strip
 directoryBin = File.expand_path File.dirname(__FILE__)
-directoryConf = "#{directoryDB}/conf"
-directoryData = "#{directoryDB}/data"
-directoryVersion = "#{directoryDB}/versions"
-directoryCurrent = "#{directoryVersion}/mysql"
 
-class buildConfig(name, id, port)
-# name, id, basedir, tmpdir, port
-  user = ENV['USER']
-  servers = "#{directoryCONF}/servers"
-  basedir = directoryCurrent
+if ARGV.length == 0
+  usage
+end
 
-  def initialiaze(name)
-    @servers = {}
-    @name  = name
-    @user = user
-    @id = id
-    @basedir = basedir
-    @port = port
-  end
+configFile = ARGV[0]
 
-  def self.getServers(servers)
-    if File.exists?(servers) && File.file?(servers)
-      serversFile = File.open(servers, 'r')
 
-      serversFile.eachline do |line|
-        serverEntry = line.split(",")
-        @servers[serverEntry[0]] = {
-          :id => serverEntry[1],
-          :basedir => serverEntry[2],
-          :tmpdir => serverEntry[3],
-          :port => serverEntry[4]
-        }
-      end
-    end
-    listServers()
-  end
+def build()
 
-  def listServers
-    title = "name\tid\tbasedir\ttmpdir\tport\n"
-    servers.each do |k,v|
-      puts "#{k}\t#{v[:id]}\t#{v[:basedir]}\t#{v[:tmpdir]}\t#{v[:port]}"
-    end
-  end
-
-  def addServer
-    @servers[name] = {
-      :id => @id,
-      :basedir => @basedir,
-      :tmpdir => @tmpdir,
-      :port => @port
-    }
-    listServers()
-  end
-
-  def delServer
-    @servers.delete(@name)
-    listServers()
-  end
 
 end
