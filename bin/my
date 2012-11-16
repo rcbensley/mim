@@ -1,46 +1,113 @@
-#!/usr/bin/env ruby
+#!/bin/bash
 
-require 'mysql'
-require 'getoptlong'
+VERDIR=$DBDIR/versions
+CONFFIR=$DBDIR/conf
 
-def usage
-  puts <<- EOF
-
-  Available commands:
-
-    build, build an instance config from the templates in conf/
-
-    start, start an instance
-
-    stop, stop an instance
-
-    status, show the running status of all instance(s)
-
-    stop-all, cleanly shutdown all instances, tables are flushed.
-
-    stop-fast, shutdown all instances
-    
-    go, send a concurrent command to all instances
-
-  EOF
+if [[ -d $DBDIR ]]
+  then
+  echo "Found db directory in: $DBDIR"
+else
+  echo "db directory not found in: $DBDIR"
   exit 1
-end
+fi
 
-if ARGV.length == 0
+help()
+{
+  echo "Usage:
+
+          help, this message
+
+          install, install instance from config file in $CONFDIR
+
+          start, start an instance
+          
+          stop, stop and instance
+          
+          status, instance status
+          
+          "
+}
+
+
+install()
+{
+  CONFIGFILE=$CONFDIR/$2.cnf
+  $DBDIR/versions/mysql/scripts/mysql_install_db --defaults-file=$CONFIGFILE 
+  exit 0
+}
+
+start()
+{
+  CONFIGFILE=$CONFDIR/$2.cnf
+  PORT=$(cat $CONFIGFILE | grep port | awk '{print $3}')
+  echo "Starting $2 on $PORT"
+  mysqld_safe --defaults-file=$CONFIGFILE > /tmp/$2.log 2>&1 &
+  sleep 2
+  cat /tmp/$2.log
+  exit 0
+}
+
+stop()
+{
+  CONFIGFILE=$CONFDIR/$2.cnf
+  PORT=$(cat $CONFIGFILE | grep port | awk '{print $3}')
+  echo "Stopping $2 on $PORT"
+  mysqladmin -P $PORT shutdown
+  exit 0
+}
+
+
+switch()
+{
+select MYVER in $VERDIR/*.gz;
+do
+
+  MYVERTAR=$(echo $MYVER | sed 's/.*\///g')
+  MYVERSTR=$(echo $MYVERTAR | sed 's/.tar.gz//')
+
+  if [[ -e $VERDIR/CURRENT ]]
+    then
+       CURVER=`cat $VERDIR/CURRENT`
+       echo "Current version is: $CURVER"
+
+       if [[ -d $VERDIR/$CURVER ]]
+         then
+          echo "Deleting $VERDIR/$CURVER"
+          rm -Rf $VERDIR/$CURVER
+
+          if [[ -h $VERDIR/mysql ]]
+            then
+              unlink $VERDIR/mysql
+          fi
+
+         else
+           echo "Current version found, but no directory?"
+       fi
+    else
+      echo "No current version, installing new..."
+  fi
+
+  echo $MYVERSTR > $VERDIR/CURRENT
+
+  tar -xf $VERDIR/$MYVERTAR -C $VERDIR
+
+  if [[ -d $VERDIR/$MYVERSTR ]]
+    then
+      ln -s $VERDIR/$MYVERSTR $VERDIR/mysql
+  else
+    echo "Extraction failed?"
+    exit 1
+  fi
+
+      echo "Current version is now: `cat $VERDIR/CURRENT`"
+      break
+done
+}
+
+if [[ -z $1 ]]
+  then
   usage
-end
-
-
-opts = GetoptLong.new(
-  ["--help","",],
-  ["","",],
-  ["","",],
-  ["","",],
-  ["","",],
-  ["","",],
-  ["","",]
-)
-
-def start
-
-end
+  exit 0
+else
+    $1
+fi
