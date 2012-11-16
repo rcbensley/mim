@@ -1,13 +1,12 @@
 #!/bin/bash
 
-MYDIR=$HOME/db
-VERDIR=$MYDIR/versions
+VERDIR=$DBDIR/versions
 
-if [[ -d $MYDIR ]]
+if [[ -d $DBDIR ]]
   then
-  echo "Found db directory in: $MYDIR"
+  echo "Found db directory in: $DBDIR"
 else
-  echo "db directory not found in: $MYDIR"
+  echo "db directory not found in: $DBDIR"
   exit 1
 fi
 
