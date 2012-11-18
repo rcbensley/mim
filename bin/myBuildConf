@@ -10,9 +10,24 @@ if ARGV.length == 0
 end
 
 configFile = ARGV[0]
+if configFile == '*.cnf'
+  then skip
+  else attach .cnf
+end
 
+dbDIR = `echo $DBDIR`.strip!
+dbCONF = "`#{dbDIR}/conf".strip!
+confTemplate = "{dbCONF}/template.cnf}".strip!
+#confVersions = {
+#  :mysql55 => 'mysql.5-5.cnf',
+#  :mysql56 => 'mysql.5-6.cnf'
+#}
+convVersions = `ls #{dbDir}/conf/ | grep "mysql."`.strip.split
 
 def build()
 
+# case versions
+
+# build from template
 
 end
