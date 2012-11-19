@@ -1,14 +1,15 @@
 #!/bin/bash
 
-VERDIR=$DBDIR/versions
-CONFFIR=$DBDIR/conf
+echo "DEBUG: $# $@"
 
-if [[ -d $DBDIR ]]
+if [[ ! -d $DBDIR ]]
   then
-  echo "Found db directory in: $DBDIR"
-else
-  echo "db directory not found in: $DBDIR"
-  exit 1
+    echo "db directory not found in: $DBDIR"
+    exit 1
+  else
+    VERDIR=$DBDIR/versions
+    CONFDIR=$DBDIR/conf
+    DATADIR=$DBDIR/data
 fi
 
 help()
@@ -17,15 +18,23 @@ help()
 
           help, this message
 
+          build, build a MySQL server config:
+                  i.e. my build foo 3306 100
+                  then run 'my install foo'
+
           install, install instance from config file in $CONFDIR
+                  my install foo, install the 'foo' instance after it is built.
 
           start, start an instance
+                  my start 3306, start MySQL on port 3306
           
-          stop, stop and instance
+          stop, stop and instance:
+                  my stop 3306, stop MySQL on port 3306
           
           status, instance status
-          
+                  my status, for all instances in $CONFDIR/servers
           "
+    exit 0
 }
 
 
@@ -54,6 +63,24 @@ stop()
   echo "Stopping $2 on $PORT"
   mysqladmin -P $PORT shutdown
   exit 0
+}
+
+status()
+{
+  SERVERSFILE=$CONFDIR/servers  
+
+  if [[ -e $SERVERSFILE ]]
+    then
+      SERVERSLIST=$(cat $SERVERSFILE | cut -F2 -d',')
+
+      for s in $SERVERSLIST;
+        do
+          mysql -P $s -B -e "select @@version;"
+        done
+    else
+      echo "Server list not found in $SERVERSFILE"
+      exit 1
+  fi
 }
 
 
@@ -104,10 +131,103 @@ do
 done
 }
 
+build()
+{
+
+NAME=$2
+PORT=$3
+ID=$4
+
+if [[ -e $CONFDIR/servers ]]
+  then
+    SERVERSFILE=$CONFDIR/servers
+    echo "$SERVERSFILE, found"
+    sleep 1
+    echo "Existing configs:"
+    echo "-----------------"
+    cat $SERVERSFILE
+  else
+    SERVERSFILE=$CONFDIR/servers
+    echo "Creating, $SERVERSFILE"
+    touch $SERVERSFILE
+    if [[ ! -e $SERVERSFILE ]]
+      then
+        echo "Creating $SERVERSFILE failed?"
+        exit 1
+    fi
+fi
+    
+if [[ -e $CONFDIR/$NAME.cnf ]]
+  then
+    echo "$NAME.cnf already exists! Overwrite?"
+    select yn in "Yes" "No"; do
+      case $yn in
+        Yes ) break;;
+        No ) exit 0;;
+      esac
+    done
+  else
+    touch $CONFDIR/$NAME.cnf
+fi
+
+echo "Adding new detaults to $CONFDIR/$NAME.cnf"
+if [[ -e $CONFDIR/$NAME.cnf ]]
+  then
+    sed                         \
+    -e 's/%USER%/$USER/g;'      \
+    -e 's/%ID%/$ID/g;'          \
+    -e 's/%BASEDIR%/$BASEDIR/g;'\
+    -e 's/%PORT%/$PORT/g;'      \
+    -e 's/%DATADIR%/$DATADIR/g;'\
+    -e 's/%NAME%/$NAME/g;'      \
+    $CONFDIR/template.cnf > $CONFDIR/$NAME.cnf
+
+    echo "$NAME,$PORT" >> $SERVERSFILE
+
+    exit 0
+  else
+    echo "$CONFDIR/$NAME.cnf not found? Exiting."
+    exit 1
+fi
+
+}
+
+
+#
+# MAIN
+#
+
+if [[ $1 == "build" ]]
+  then
+    if [[ $# -ne 4 ]]
+      then
+        echo "Wrong Parameters."
+        help
+        exit 1
+    fi
+fi
+
+if [[ $1 == "install" ]]
+  then
+    if [[ $# -ne 2 ]]
+      then
+        echo "Wrong Paramters."
+        help
+        exit 1
+    fi
+fi
+
 if [[ -z $1 ]]
   then
-  usage
+  help
   exit 0
 else
-    $1
+    if [[ "`type -t $1`" = 'function'  ]]
+      then
+        $1
+      else
+        echo "That is not a valid command."
+        help
+        exit 1
+    fi
 fi
