@@ -10,6 +10,8 @@ if [[ ! -d $DBDIR ]]
     VERDIR=$DBDIR/versions
     CONFDIR=$DBDIR/conf
     DATADIR=$DBDIR/data
+    TMPDIR=/tmp
+    echo $DATADIR
 fi
 
 help()
@@ -41,7 +43,8 @@ help()
 install()
 {
   CONFIGFILE=$CONFDIR/$2.cnf
-  $DBDIR/versions/mysql/scripts/mysql_install_db --defaults-file=$CONFIGFILE 
+  cd $VERDIR/mysql/
+  ./scripts/mysql_install_db --defaults-file=$CONFIGFILE 
   exit 0
 }
 
@@ -58,7 +61,6 @@ start()
 
 stop()
 {
-  CONFIGFILE=$CONFDIR/$2.cnf
   PORT=$(cat $CONFIGFILE | grep port | awk '{print $3}')
   echo "Stopping $2 on $PORT"
   mysqladmin -P $PORT shutdown
@@ -71,10 +73,14 @@ status()
 
   if [[ -e $SERVERSFILE ]]
     then
-      SERVERSLIST=$(cat $SERVERSFILE | cut -F2 -d',')
+      SERVERLIST=$(cat $SERVERSFILE | cut -f1 -f',')
+      PORTLIST=$(cat $SERVERSFILE | cut -f2 -d',')
 
-      for s in $SERVERSLIST;
+      for s in $(cat $SERVERSFILE)
         do
+          SERVERNAME=$(echo $s | cut -f1 -d',')
+          SERVERPORT=$(echo $s | cut -f2 -d',')
+          SERVERSOCK=$(cat $CONFDIR/$SERVERNAME.cnf | grep socket | awk '{print $3}')
           mysql -P $s -B -e "select @@version;"
         done
     else
@@ -134,10 +140,6 @@ done
 build()
 {
 
-NAME=$2
-PORT=$3
-ID=$4
-
 if [[ -e $CONFDIR/servers ]]
   then
     SERVERSFILE=$CONFDIR/servers
@@ -157,9 +159,9 @@ if [[ -e $CONFDIR/servers ]]
     fi
 fi
     
-if [[ -e $CONFDIR/$NAME.cnf ]]
+if [[ -e $CONFDIR/$SERVERNAME.cnf ]]
   then
-    echo "$NAME.cnf already exists! Overwrite?"
+    echo "$SERVERNAME.cnf already exists! Overwrite?"
     select yn in "Yes" "No"; do
       case $yn in
         Yes ) break;;
@@ -167,26 +169,27 @@ if [[ -e $CONFDIR/$NAME.cnf ]]
       esac
     done
   else
-    touch $CONFDIR/$NAME.cnf
+    touch $CONFDIR/$SERVERNAME.cnf
 fi
 
-echo "Adding new detaults to $CONFDIR/$NAME.cnf"
-if [[ -e $CONFDIR/$NAME.cnf ]]
+echo "Adding new detaults to $CONFDIR/$SERVERNAME.cnf"
+if [[ -e $CONFDIR/$SERVERNAME.cnf ]]
   then
-    sed                         \
-    -e 's/%USER%/$USER/g;'      \
-    -e 's/%ID%/$ID/g;'          \
-    -e 's/%BASEDIR%/$BASEDIR/g;'\
-    -e 's/%PORT%/$PORT/g;'      \
-    -e 's/%DATADIR%/$DATADIR/g;'\
-    -e 's/%NAME%/$NAME/g;'      \
-    $CONFDIR/template.cnf > $CONFDIR/$NAME.cnf
+    sed                                 \
+    -e 's/%USER%/'$USER'/g;'              \
+    -e 's/%ID%/'$ID'/g;'                  \
+    -e 's/%TMPDIR%/'$TMPDIR'/g;'                \
+    -e 's/%BASEDIR%/'$BASEDIR'/g;'        \
+    -e 's/%PORT%/'$PORT'/g;'              \
+    -e 's/%DATADIR%/$DATADIR/g;'        \
+    -e 's/%SERVERNAME%/$SERVERNAME/g;'  \
+    $CONFDIR/template.cnf > $CONFDIR/$SERVERNAME.cnf
 
-    echo "$NAME,$PORT" >> $SERVERSFILE
+    echo "$SERVERNAME,$PORT" >> $SERVERSFILE
 
     exit 0
   else
-    echo "$CONFDIR/$NAME.cnf not found? Exiting."
+    echo "$CONFDIR/$SERVERNAME.cnf not found? Exiting."
     exit 1
 fi
 
@@ -204,6 +207,10 @@ if [[ $1 == "build" ]]
         echo "Wrong Parameters."
         help
         exit 1
+      else
+        SERVERNAME=$2
+        PORT=$3
+        ID=$4
     fi
 fi
 
@@ -214,6 +221,8 @@ if [[ $1 == "install" ]]
         echo "Wrong Paramters."
         help
         exit 1
+      else
+        CONFIGFILE=$CONFDIR/$2.cnf
     fi
 fi
 
@@ -224,6 +233,7 @@ if [[ -z $1 ]]
 else
     if [[ "`type -t $1`" = 'function'  ]]
       then
+        CONFIGFILE=$CONFDIR/$2.cnf
         $1
       else
         echo "That is not a valid command."
