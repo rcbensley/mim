@@ -1,3 +1,0 @@
-#name,port,version,defaults
-master0,3300,CURRENT,master56.cnf
-slave0,4400,CURRENT,slave56.cnf

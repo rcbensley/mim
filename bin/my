@@ -1,14 +1,17 @@
 #!/bin/bash
 
-VERDIR=$DBDIR/versions
-CONFFIR=$DBDIR/conf
+echo "DEBUG: $# $@"
 
-if [[ -d $DBDIR ]]
+if [[ ! -d $DBDIR ]]
   then
-  echo "Found db directory in: $DBDIR"
-else
-  echo "db directory not found in: $DBDIR"
-  exit 1
+    echo "db directory not found in: $DBDIR"
+    exit 1
+  else
+    VERDIR=$DBDIR/versions
+    BASEDIR=$VERDIR/mysql
+    CONFDIR=$DBDIR/conf
+    DATADIR=$DBDIR/data
+    TMPDIR=/tmp
 fi
 
 help()
@@ -17,43 +20,79 @@ help()
 
           help, this message
 
+          build, build a MySQL server config:
+                  i.e. my build foo 3306 100
+                  then run 'my install foo'
+
           install, install instance from config file in $CONFDIR
+                  my install foo, install the 'foo' instance after it is built.
 
           start, start an instance
+                  my start 3306, start MySQL on port 3306
           
-          stop, stop and instance
+          stop, stop and instance:
+                  my stop 3306, stop MySQL on port 3306
           
           status, instance status
-          
+                  my status, for all instances in $CONFDIR/servers
           "
+    exit 0
 }
 
 
 install()
 {
-  CONFIGFILE=$CONFDIR/$2.cnf
-  $DBDIR/versions/mysql/scripts/mysql_install_db --defaults-file=$CONFIGFILE 
-  exit 0
+  if [[ -d $DATADIR/$SERVERNAME.cnf ]]
+    then
+      echo "$DATADIR/$SERVERNAME already exists!"
+      echo "Maybe remove this datadir first?"
+      exit 1
+    else
+      mkdir $DATADIR/$SERVERNAME
+      CONFIGFILE=$CONFDIR/$SERVERNAME.cnf
+      cd $VERDIR/mysql/
+      ./scripts/mysql_install_db --defaults-file=$CONFIGFILE 
+      exit 0
+  fi
 }
 
 start()
 {
-  CONFIGFILE=$CONFDIR/$2.cnf
+  CONFIGFILE=$CONFDIR/$SERVERNAME.cnf
   PORT=$(cat $CONFIGFILE | grep port | awk '{print $3}')
-  echo "Starting $2 on $PORT"
-  mysqld_safe --defaults-file=$CONFIGFILE > /tmp/$2.log 2>&1 &
+  echo "Starting $SERVERNAME on $PORT"
+  mysqld_safe --defaults-file=$CONFIGFILE --ledir=$BASEDIR/bin > /tmp/$SERVERNAME.log 2>&1 &
   sleep 2
-  cat /tmp/$2.log
+  cat /tmp/$SERVERNAME.log
   exit 0
 }
 
 stop()
 {
-  CONFIGFILE=$CONFDIR/$2.cnf
   PORT=$(cat $CONFIGFILE | grep port | awk '{print $3}')
-  echo "Stopping $2 on $PORT"
+  echo "Stopping $SERVERNAME on $PORT"
   mysqladmin -P $PORT shutdown
   exit 0
+}
+
+status()
+{
+  SERVERSFILE=$CONFDIR/servers  
+
+  if [[ -e $SERVERSFILE ]]
+    then
+      for s in $(cat $SERVERSFILE)
+        do
+          SERVERNAME=$(echo $s | cut -d, -f1)
+          SERVERPORT=$(echo $s | cut -d, -f2)
+          SERVERSOCK=$(cat $CONFDIR/$SERVERNAME.cnf | grep socket | awk '{print $3}')
+          echo "SERVER: $SERVERNAME PORT: $SERVERPORT"
+          mysql -P $s -B -e "select @@version;"
+        done
+    else
+      echo "Server list not found in $SERVERSFILE"
+      exit 1
+  fi
 }
 
 
@@ -104,10 +143,109 @@ do
 done
 }
 
+build()
+{
+
+if [[ -e $CONFDIR/servers ]]
+  then
+    SERVERSFILE=$CONFDIR/servers
+    echo "$SERVERSFILE, found"
+    sleep 1
+    echo "Existing configs:"
+    echo "-----------------"
+    cat $SERVERSFILE
+  else
+    SERVERSFILE=$CONFDIR/servers
+    echo "Creating, $SERVERSFILE"
+    touch $SERVERSFILE
+    if [[ ! -e $SERVERSFILE ]]
+      then
+        echo "Creating $SERVERSFILE failed?"
+        exit 1
+    fi
+fi
+    
+if [[ -e $CONFDIR/$SERVERNAME.cnf ]]
+  then
+    echo "$SERVERNAME.cnf already exists! Overwrite?"
+    select yn in "Yes" "No"; do
+      case $yn in
+        Yes ) break;;
+        No ) exit 0;;
+      esac
+    done
+  else
+    touch $CONFDIR/$SERVERNAME.cnf
+fi
+
+echo "Adding new detaults to $CONFDIR/$SERVERNAME.cnf"
+if [[ -e $CONFDIR/$SERVERNAME.cnf ]]
+  then
+    sed                                 \
+    -e 's;%USER%;'$USER';g;'              \
+    -e 's;%ID%;'$ID';g;'                  \
+    -e 's;%TMPDIR%;'$TMPDIR';g;'                \
+    -e 's;%BASEDIR%;'$BASEDIR';g;'        \
+    -e 's;%PORT%;'$PORT';g;'              \
+    -e 's;%DATADIR%;'$DATADIR';g;'        \
+    -e 's;%SERVERNAME%;'$SERVERNAME';g;'  \
+    $CONFDIR/template.cnf > $CONFDIR/$SERVERNAME.cnf
+
+    echo "$SERVERNAME,$PORT" >> $SERVERSFILE
+
+    exit 0
+  else
+    echo "$CONFDIR/$SERVERNAME.cnf not found? Exiting."
+    exit 1
+fi
+
+}
+
+
+#
+# MAIN
+#
+
+if [[ $1 == "build" ]]
+  then
+    if [[ $# -ne 4 ]]
+      then
+        echo "Wrong Parameters."
+        help
+        exit 1
+      else
+        SERVERNAME=$2
+        PORT=$3
+        ID=$4
+    fi
+fi
+
+if [[ $1 == "install" ]]
+  then
+    if [[ $# -ne 2 ]]
+      then
+        echo "Wrong Paramters."
+        help
+        exit 1
+      else
+        CONFIGFILE=$CONFDIR/$2.cnf
+        SERVERNAME=$2
+    fi
+fi
+
 if [[ -z $1 ]]
   then
-  usage
+  help
   exit 0
 else
-    $1
+    if [[ "`type -t $1`" = 'function'  ]]
+      then
+        CONFIGFILE=$CONFDIR/$2.cnf
+        SERVERNAME=$2
+        $1
+      else
+        echo "That is not a valid command."
+        help
+        exit 1
+    fi
 fi
