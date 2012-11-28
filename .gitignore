@@ -1,10 +1,7 @@
-<<<<<<< HEAD
 *.swp
 *.tar
 *.gz
 versions/maria*
 versions/mysql*
-=======
 .DS_STORE
 *.swp
->>>>>>> ffa6bf5d660be87cb65a3cf2900b9b091cda54f7
