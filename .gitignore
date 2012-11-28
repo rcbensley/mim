@@ -1,0 +1,5 @@
+*.swp
+*.tar
+*.gz
+versions/maria*
+versions/mysql*
