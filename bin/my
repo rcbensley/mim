@@ -8,10 +8,10 @@ if [[ ! -d $DBDIR ]]
     exit 1
   else
     VERDIR=$DBDIR/versions
+    BASEDIR=$VERDIR/mysql
     CONFDIR=$DBDIR/conf
     DATADIR=$DBDIR/data
     TMPDIR=/tmp
-    echo $DATADIR
 fi
 
 help()
@@ -42,27 +42,35 @@ help()
 
 install()
 {
-  CONFIGFILE=$CONFDIR/$2.cnf
-  cd $VERDIR/mysql/
-  ./scripts/mysql_install_db --defaults-file=$CONFIGFILE 
-  exit 0
+  if [[ -d $DATADIR/$SERVERNAME.cnf ]]
+    then
+      echo "$DATADIR/$SERVERNAME already exists!"
+      echo "Maybe remove this datadir first?"
+      exit 1
+    else
+      mkdir $DATADIR/$SERVERNAME
+      CONFIGFILE=$CONFDIR/$SERVERNAME.cnf
+      cd $VERDIR/mysql/
+      ./scripts/mysql_install_db --defaults-file=$CONFIGFILE 
+      exit 0
+  fi
 }
 
 start()
 {
-  CONFIGFILE=$CONFDIR/$2.cnf
+  CONFIGFILE=$CONFDIR/$SERVERNAME.cnf
   PORT=$(cat $CONFIGFILE | grep port | awk '{print $3}')
-  echo "Starting $2 on $PORT"
-  mysqld_safe --defaults-file=$CONFIGFILE > /tmp/$2.log 2>&1 &
+  echo "Starting $SERVERNAME on $PORT"
+  mysqld_safe --defaults-file=$CONFIGFILE --ledir=$BASEDIR/bin > /tmp/$SERVERNAME.log 2>&1 &
   sleep 2
-  cat /tmp/$2.log
+  cat /tmp/$SERVERNAME.log
   exit 0
 }
 
 stop()
 {
   PORT=$(cat $CONFIGFILE | grep port | awk '{print $3}')
-  echo "Stopping $2 on $PORT"
+  echo "Stopping $SERVERNAME on $PORT"
   mysqladmin -P $PORT shutdown
   exit 0
 }
@@ -73,14 +81,12 @@ status()
 
   if [[ -e $SERVERSFILE ]]
     then
-      SERVERLIST=$(cat $SERVERSFILE | cut -f1 -f',')
-      PORTLIST=$(cat $SERVERSFILE | cut -f2 -d',')
-
       for s in $(cat $SERVERSFILE)
         do
-          SERVERNAME=$(echo $s | cut -f1 -d',')
-          SERVERPORT=$(echo $s | cut -f2 -d',')
+          SERVERNAME=$(echo $s | cut -d, -f1)
+          SERVERPORT=$(echo $s | cut -d, -f2)
           SERVERSOCK=$(cat $CONFDIR/$SERVERNAME.cnf | grep socket | awk '{print $3}')
+          echo "SERVER: $SERVERNAME PORT: $SERVERPORT"
           mysql -P $s -B -e "select @@version;"
         done
     else
@@ -176,13 +182,13 @@ echo "Adding new detaults to $CONFDIR/$SERVERNAME.cnf"
 if [[ -e $CONFDIR/$SERVERNAME.cnf ]]
   then
     sed                                 \
-    -e 's/%USER%/'$USER'/g;'              \
-    -e 's/%ID%/'$ID'/g;'                  \
-    -e 's/%TMPDIR%/'$TMPDIR'/g;'                \
-    -e 's/%BASEDIR%/'$BASEDIR'/g;'        \
-    -e 's/%PORT%/'$PORT'/g;'              \
-    -e 's/%DATADIR%/$DATADIR/g;'        \
-    -e 's/%SERVERNAME%/$SERVERNAME/g;'  \
+    -e 's;%USER%;'$USER';g;'              \
+    -e 's;%ID%;'$ID';g;'                  \
+    -e 's;%TMPDIR%;'$TMPDIR';g;'                \
+    -e 's;%BASEDIR%;'$BASEDIR';g;'        \
+    -e 's;%PORT%;'$PORT';g;'              \
+    -e 's;%DATADIR%;'$DATADIR';g;'        \
+    -e 's;%SERVERNAME%;'$SERVERNAME';g;'  \
     $CONFDIR/template.cnf > $CONFDIR/$SERVERNAME.cnf
 
     echo "$SERVERNAME,$PORT" >> $SERVERSFILE
@@ -223,6 +229,7 @@ if [[ $1 == "install" ]]
         exit 1
       else
         CONFIGFILE=$CONFDIR/$2.cnf
+        SERVERNAME=$2
     fi
 fi
 
@@ -234,6 +241,7 @@ else
     if [[ "`type -t $1`" = 'function'  ]]
       then
         CONFIGFILE=$CONFDIR/$2.cnf
+        SERVERNAME=$2
         $1
       else
         echo "That is not a valid command."
