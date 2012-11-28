@@ -1,2 +1,7 @@
+*.swp
+*.tar
+*.gz
+versions/maria*
+versions/mysql*
 .DS_STORE
 *.swp
