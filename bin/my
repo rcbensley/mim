@@ -1,6 +1,6 @@
 #!/bin/bash
 
-echo "DEBUG: $# $@"
+#echo "DEBUG: $# $@"
 
 if [[ ! -d $DBDIR ]]
   then
@@ -10,6 +10,7 @@ if [[ ! -d $DBDIR ]]
     VERDIR=$DBDIR/versions
     BASEDIR=$VERDIR/mysql
     CONFDIR=$DBDIR/conf
+    TEMPLATEDIR=$DBDIR/templates
     DATADIR=$DBDIR/data
     TMPDIR=/tmp
 fi
@@ -77,22 +78,14 @@ stop()
 
 status()
 {
-  SERVERSFILE=$CONFDIR/servers  
-
-  if [[ -e $SERVERSFILE ]]
-    then
-      for s in $(cat $SERVERSFILE)
-        do
-          SERVERNAME=$(echo $s | cut -d, -f1)
-          SERVERPORT=$(echo $s | cut -d, -f2)
-          SERVERSOCK=$(cat $CONFDIR/$SERVERNAME.cnf | grep socket | awk '{print $3}')
-          echo "SERVER: $SERVERNAME PORT: $SERVERPORT"
-          mysql -P $s -B -e "select @@version;"
-        done
-    else
-      echo "Server list not found in $SERVERSFILE"
-      exit 1
-  fi
+  for conf in $(ls $CONFDIR/*.cnf | egrep -vi 'my.cnf|template.cnf')
+    do
+      SERVERNAME=$(echo $conf | sed 's/.*\///g' | cut -d. -f1)
+      SERVERPORT=$(cat $conf | grep -i port | awk '{print $3}')
+      SERVERSOCK=$(cat $conf | grep -i socket | awk '{print $3}')
+      echo "SERVER: $SERVERNAME PORT: $SERVERPORT"
+      mysql -P $SERVERPORT -Be "select @@version;" --socket=$SERVERSOCK
+    done
 }
 
 
@@ -146,23 +139,11 @@ done
 build()
 {
 
-if [[ -e $CONFDIR/servers ]]
+if [[ -e $CONFDIR ]]
   then
-    SERVERSFILE=$CONFDIR/servers
-    echo "$SERVERSFILE, found"
-    sleep 1
     echo "Existing configs:"
     echo "-----------------"
-    cat $SERVERSFILE
-  else
-    SERVERSFILE=$CONFDIR/servers
-    echo "Creating, $SERVERSFILE"
-    touch $SERVERSFILE
-    if [[ ! -e $SERVERSFILE ]]
-      then
-        echo "Creating $SERVERSFILE failed?"
-        exit 1
-    fi
+    ls $CONFDIR/*.cnf
 fi
     
 if [[ -e $CONFDIR/$SERVERNAME.cnf ]]
@@ -189,9 +170,7 @@ if [[ -e $CONFDIR/$SERVERNAME.cnf ]]
     -e 's;%PORT%;'$PORT';g;'              \
     -e 's;%DATADIR%;'$DATADIR';g;'        \
     -e 's;%SERVERNAME%;'$SERVERNAME';g;'  \
-    $CONFDIR/template.cnf > $CONFDIR/$SERVERNAME.cnf
-
-    echo "$SERVERNAME,$PORT" >> $SERVERSFILE
+    $TEMPLATEDIR/template.cnf > $CONFDIR/$SERVERNAME.cnf
 
     exit 0
   else
