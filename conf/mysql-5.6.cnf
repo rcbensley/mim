@@ -1,5 +1,0 @@
-[mysql-5.6]
-gtid_mode                     = ON
-disable-gtid-unsafe-statements
-master-info-repository        = TABLE
-relay-log-info-repository     = TABLE
