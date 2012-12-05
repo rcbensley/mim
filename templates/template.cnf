@@ -6,11 +6,11 @@ tmpdir                         = %TMPDIR%
 port                           = %PORT%
 datadir                        = %DATADIR%
 
-socket                         = %DATADIR%/%USER%/mysql.sock
-pid_file                       = %DATADIR%/%USER%/mysql.pid
-log-bin                        = %DATADIR%/%USER%/mysql-log-bin
-log-bin-index                  = %DATADIR%/%USER%/mysql-log-bin.index
-log_error                      = %DATADIR%/%USER%/error.log
-slow_query_log_file            = %DATADIR%/%USER%/slow.log
+socket                         = %DATADIR%/%SERVERNAME%/mysql.sock
+pid_file                       = %DATADIR%/%SERVERNAME%/mysql.pid
+log-bin                        = %DATADIR%/%SERVERNAME%/mysql-log-bin
+log-bin-index                  = %DATADIR%/%SERVERNAME%/mysql-log-bin.index
+log_error                      = %DATADIR%/%SERVERNAME%/error.log
+slow_query_log_file            = %DATADIR%/%SERVERNAME%/slow.log
 
 !include ../templates/my.cnf

@@ -88,6 +88,13 @@ status()
     done
 }
 
+use()
+{
+  SERVERPORT=$(cat $CONFIGFILE | grep -i port | awk '{print $3}')
+  SERVERSOCK=$(cat $CONFIGFILE | grep -i socket | awk '{print $3}')
+  mysql -P $SERVERPORT --socket=$SERVERSOCK
+}
+
 
 switch()
 {
