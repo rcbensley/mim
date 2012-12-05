@@ -1,0 +1,16 @@
+[mysqld]
+user                           = %USER%
+server-id                      = %ID%
+basedir                        = %BASEDIR%
+tmpdir                         = %TMPDIR%
+port                           = %PORT%
+
+datadir                        = %DATADIR%/%USER%
+socket                         = %DATADIR%/%USER%/mysql.sock
+pid_file                       = %DATADIR%/%USER%/mysql.pid
+log-bin                        = %DATADIR%/%USER%/mysql-log-bin
+log-bin-index                  = %DATADIR%/%USER%/mysql-log-bin.index
+log_error                      = %DATADIR%/%USER%/error.log
+slow_query_log_file            = %DATADIR%/%USER%/slow.log
+
+!include ../templates/my.cnf
