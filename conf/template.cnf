@@ -1,17 +1,17 @@
 [mysqld]
-user                           = <%= user %>
-server-id                      = <%= id %>
-basedir                        = <%= basedir %>
-tmpdir                         = <%= tmpdir %>
-port                           = <%= port %>
+user                           = %USER%
+server-id                      = %ID%
+basedir                        = %BASEDIR%
+tmpdir                         = %TMPDIR%
+port                           = %PORT%
 
-datadir                        = <%= DATADIR %>/<%= name %>
-socket                         = <%= DATADIR %>/<%= name %>/mysql.sock
-pid_file                       = <%= DATADIR %>/<%= name %>/mysql.pid
-log-bin                        = <%= DATADIR %>/<%= name %>/mysql-log-bin
-log-bin-index                  = <%= DATADIR %>/<%= name %>/mysql-log-bin.index
-log_error                      = <%= DATADIR %>/<%= name %>/error.log
-slow_query_log_file            = <%= DATADIR %>/<%= name %>/slow.log
+datadir                        = %DATADIR%/%USER%
+socket                         = %DATADIR%/%USER%/mysql.sock
+pid_file                       = %DATADIR%/%USER%/mysql.pid
+log-bin                        = %DATADIR%/%USER%/mysql-log-bin
+log-bin-index                  = %DATADIR%/%USER%/mysql-log-bin.index
+log_error                      = %DATADIR%/%USER%/error.log
+slow_query_log_file            = %DATADIR%/%USER%/slow.log
 
 % cnfIncludes.each do |cnf|
 
