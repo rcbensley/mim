@@ -78,13 +78,18 @@ stop()
 
 status()
 {
-  for conf in $(ls $CONFDIR/*.cnf | egrep -vi 'my.cnf|template.cnf')
+  for conf in $(ls $CONFDIR/*.cnf)
     do
       SERVERNAME=$(echo $conf | sed 's/.*\///g' | cut -d. -f1)
       SERVERPORT=$(cat $conf | grep -i port | awk '{print $3}')
       SERVERSOCK=$(cat $conf | grep -i socket | awk '{print $3}')
-      echo "SERVER: $SERVERNAME PORT: $SERVERPORT"
-      mysql -P $SERVERPORT -Be "select @@version;" --socket=$SERVERSOCK
+      if [[ -e $DATADIR/$SERVERNAME/mysql.pid ]]
+        then
+          SERVERSTATUS=`mysql -P$SERVERPORT --socket=$SERVERSOCK -Be "select 'ONLINE';" | tail -1`
+          echo -e "$SERVERNAME\t$SERVERSTATUS"
+        else
+          echo -e "$SERVERNAME\tOFFLINE"
+      fi
     done
 }
 
@@ -93,6 +98,36 @@ use()
   SERVERPORT=$(cat $CONFIGFILE | grep -i port | awk '{print $3}')
   SERVERSOCK=$(cat $CONFIGFILE | grep -i socket | awk '{print $3}')
   mysql -P $SERVERPORT --socket=$SERVERSOCK
+}
+
+list()
+{
+if [[ -e $CONFDIR ]]
+  then
+    echo    "Existing configs:"
+    echo    "----------------------------------------------------------------------"
+    echo -e "Name\t\tConfig\t\t\tdatadir"
+    echo    "----------------------------------------------------------------------"
+
+    for conf in $(ls $CONFDIR)
+      do
+        SERVERNAME=$(echo $conf | sed 's/.*\///g' | cut -d. -f1)
+        SERVERCONF=$(echo $conf | sed 's/.*\///g')
+        SERVERDIR=$(cat $CONFDIR/$conf | grep -i datadir | awk '{print $3}')
+
+        if [[ -d $DATADIR/$SERVERNAME ]]
+          then
+            SERVERDIRSTATUS="$SERVERDIR"
+          else
+            SERVERDIRSTATUS="NOT INSTALLED"
+          fi
+        
+        echo -e "$SERVERNAME\t\t$SERVERCONF\t\t$SERVERDIRSTATUS"
+      done
+  else
+    echo "$CONFDIR not found?"
+    exit 1
+fi
 }
 
 
@@ -146,13 +181,6 @@ done
 build()
 {
 
-if [[ -e $CONFDIR ]]
-  then
-    echo "Existing configs:"
-    echo "-----------------"
-    ls $CONFDIR/*.cnf
-fi
-    
 if [[ -e $CONFDIR/$SERVERNAME.cnf ]]
   then
     echo "$SERVERNAME.cnf already exists! Overwrite?"
