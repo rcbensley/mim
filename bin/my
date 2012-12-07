@@ -1,6 +1,8 @@
 #!/bin/bash
 
-#echo "DEBUG: $# $@"
+#
+# Init
+#
 
 if [[ ! -d $DBDIR ]]
   then
@@ -15,11 +17,17 @@ if [[ ! -d $DBDIR ]]
     TMPDIR=/tmp
 fi
 
+#
+# Bring the Fun-ctions
+#
+
 help()
 {
   echo "Usage:
 
           help, this message
+
+          list, show existing configs, and if they are installed
 
           build, build a MySQL server config:
                   i.e. my build foo 3306 100
@@ -34,12 +42,11 @@ help()
           stop, stop and instance:
                   my stop 3306, stop MySQL on port 3306
           
-          status, instance status
-                  my status, for all instances in $CONFDIR/servers
+          status, MySQL/MariaDB instance status
+                  my status, for all instances
           "
     exit 0
 }
-
 
 install()
 {
@@ -85,8 +92,15 @@ status()
       SERVERSOCK=$(cat $conf | grep -i socket | awk '{print $3}')
       if [[ -e $DATADIR/$SERVERNAME/mysql.pid ]]
         then
-          SERVERSTATUS=`mysql -P$SERVERPORT --socket=$SERVERSOCK -Be "select 'ONLINE';" | tail -1`
-          echo -e "$SERVERNAME\t$SERVERSTATUS"
+          MASTERSTATUS=$(mysql -P$SERVERPORT --socket=$SERVERSOCK -Be "SHOW MASTER STATUS;" | tail -1)
+          SERVERSTATUS=$(mysql -P$SERVERPORT --socket=$SERVERSOCK -Be "SELECT 'ONLINE';" | tail -1)
+          MASTERLOGFILE=$(echo $MASTERSTATUS | awk '{print $1}')
+          MASTERLOGPOS=$(echo $MASTERSTATUS | awk '{print $2}')
+          MASTERDO=$(echo $MASTERSTATUS | awk '{print $3}')
+          MASTERIGNORE=$(echo $MASTERSTATUS | awk '{print $4}')
+          MASTERLOGGTID=$(echo $MASTERSTATUS | awk '{print $5}')
+
+          echo -e "$SERVERNAME\t$SERVERSTATUS\t$MASTERLOGFILE\t$MASTERLOGPOS\t$MASTERLOGGTID"
         else
           echo -e "$SERVERNAME\tOFFLINE"
       fi
@@ -129,7 +143,6 @@ if [[ -e $CONFDIR ]]
     exit 1
 fi
 }
-
 
 switch()
 {
@@ -197,10 +210,10 @@ fi
 echo "Adding new detaults to $CONFDIR/$SERVERNAME.cnf"
 if [[ -e $CONFDIR/$SERVERNAME.cnf ]]
   then
-    sed                                 \
+    sed                                   \
     -e 's;%USER%;'$USER';g;'              \
     -e 's;%ID%;'$ID';g;'                  \
-    -e 's;%TMPDIR%;'$TMPDIR';g;'                \
+    -e 's;%TMPDIR%;'$TMPDIR';g;'          \
     -e 's;%BASEDIR%;'$BASEDIR';g;'        \
     -e 's;%PORT%;'$PORT';g;'              \
     -e 's;%DATADIR%;'$DATADIR';g;'        \
@@ -217,7 +230,7 @@ fi
 
 
 #
-# MAIN
+# MAIN, some damn lazy evaluation!
 #
 
 if [[ $1 == "build" ]]
