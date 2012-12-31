@@ -17,6 +17,23 @@ if [[ ! -d $DBDIR ]]
     TMPDIR=/tmp
 fi
 
+if [[ ! $CONFDIR ]]
+  then
+  PS3="conf directory not found, create it?"
+  select opt in y n
+  do
+    case $opt in
+      "y")
+        mkdir $DBDIR/conf
+        ls -l $DBDIR
+      "n")
+        break
+        ;;
+      *) echo "Invalid choice y or n";;
+    esac
+  done
+fi
+
 #
 # Bring the Fun-ctions
 #
@@ -46,6 +63,8 @@ help()
           
           status, MySQL/MariaDB instance status
                   my status, for all instances
+
+          Tutorial: switch to install server binaries, build to make a config, then run install to configure.
           "
     exit 0
 }
