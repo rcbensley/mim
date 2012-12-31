@@ -4,7 +4,7 @@ server-id                      = %ID%
 basedir                        = %BASEDIR%
 tmpdir                         = %TMPDIR%
 port                           = %PORT%
-datadir                        = %DATADIR%
+datadir                        = %DATADIR%/%SERVERNAME%
 
 socket                         = %DATADIR%/%SERVERNAME%/mysql.sock
 pid_file                       = %DATADIR%/%SERVERNAME%/mysql.pid
