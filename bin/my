@@ -26,6 +26,7 @@ if [[ ! $CONFDIR ]]
       "y")
         mkdir $DBDIR/conf
         ls -l $DBDIR
+        ;;
       "n")
         break
         ;;
@@ -80,7 +81,7 @@ install()
       mkdir $DATADIR/$SERVERNAME
       CONFIGFILE=$CONFDIR/$SERVERNAME.cnf
       cd $VERDIR/mysql/
-      ./scripts/mysql_install_db --defaults-file=$CONFIGFILE 
+      ./scripts/mysql_install_db --defaults-file=$CONFIGFILE 2>&1 | egrep -i 'mysqladmin|secure'
       exit 0
   fi
 }
@@ -98,9 +99,10 @@ start()
 
 stop()
 {
-  PORT=$(cat $CONFIGFILE | grep port | awk '{print $3}')
-  echo "Stopping $SERVERNAME on $PORT"
-  mysqladmin -P $PORT shutdown
+  SERVERPORT=$(cat $CONFIGFILE | grep -i port | awk '{print $3}')
+  SERVERSOCK=$(cat $CONFIGFILE | grep -i socket | awk '{print $3}')
+  echo "Stopping $SERVERNAME on $SERVERPORT"
+  mysqladmin -u root --socket=$SERVERSOCK -P $SERVERPORT shutdown
   exit 0
 }
 
@@ -113,8 +115,8 @@ status()
       SERVERSOCK=$(cat $conf | grep -i socket | awk '{print $3}')
       if [[ -e $DATADIR/$SERVERNAME/mysql.pid ]]
         then
-          MASTERSTATUS=$(mysql -P$SERVERPORT --socket=$SERVERSOCK -Be "SHOW MASTER STATUS;" | tail -1)
-          SERVERSTATUS=$(mysql -P$SERVERPORT --socket=$SERVERSOCK -Be "SELECT 'ONLINE';" | tail -1)
+          MASTERSTATUS=$(mysql -uroot -P$SERVERPORT --socket=$SERVERSOCK -Be "SHOW MASTER STATUS;" | tail -1)
+          SERVERSTATUS=$(mysql -uroot -P$SERVERPORT --socket=$SERVERSOCK -Be "SELECT 'ONLINE';" | tail -1)
           MASTERLOGFILE=$(echo $MASTERSTATUS | awk '{print $1}')
           MASTERLOGPOS=$(echo $MASTERSTATUS | awk '{print $2}')
           MASTERDO=$(echo $MASTERSTATUS | awk '{print $3}')
@@ -132,7 +134,7 @@ use()
 {
   SERVERPORT=$(cat $CONFIGFILE | grep -i port | awk '{print $3}')
   SERVERSOCK=$(cat $CONFIGFILE | grep -i socket | awk '{print $3}')
-  mysql -P $SERVERPORT --socket=$SERVERSOCK
+  mysql -P $SERVERPORT -uroot --socket=$SERVERSOCK
 }
 
 list()
