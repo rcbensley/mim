@@ -29,6 +29,8 @@ help()
 
           list, show existing configs, and if they are installed
 
+          switch, change MySQL/MariaDB version or install a new one.
+
           build, build a MySQL server config:
                   i.e. my build foo 3306 100
                   then run 'my install foo'
