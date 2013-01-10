@@ -241,6 +241,7 @@ if [[ -e $CONFDIR/$SERVERNAME.cnf ]]
     -e 's;%PORT%;'$PORT';g;'              \
     -e 's;%DATADIR%;'$DATADIR';g;'        \
     -e 's;%SERVERNAME%;'$SERVERNAME';g;'  \
+    -e 's;%TEMPLATEDIR%;'$TEMPLATEDIR';g;'  \
     $TEMPLATEDIR/template.cnf > $CONFDIR/$SERVERNAME.cnf
 
     exit 0
