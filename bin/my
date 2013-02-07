@@ -17,20 +17,22 @@ if [[ ! -d $DBDIR ]]
     TMPDIR=/tmp
 fi
 
-if [[ ! $CONFDIR ]]
+if [[ ! -d $CONFDIR ]]
   then
-  PS3="conf directory not found, create it?"
-  select opt in y n
+  #PS3="conf directory not found, create it?"
+  echo "conf directory not found, create it?"
+  select yn in "Yes" "No";
   do
-    case $opt in
-      "y")
+    case $yn in
+      "Yes")
         mkdir $DBDIR/conf
         ls -l $DBDIR
+	exit 0
         ;;
-      "n")
+      "No")
         break
         ;;
-      *) echo "Invalid choice y or n";;
+      * ) echo "Choose an option or ^C to quit.";;
     esac
   done
 fi
