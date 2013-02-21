@@ -52,7 +52,7 @@ help()
           switch, change MySQL/MariaDB version or install a new one.
 
           build, build a MySQL server config:
-                  i.e. my build foo 3306 100
+                  i.e. my build foo 3306 100 mariadb
                   then run 'my install foo'
 
           install, install instance from config file in $CONFDIR
@@ -219,38 +219,49 @@ done
 build()
 {
 
-if [[ -e $CONFDIR/$SERVERNAME.cnf ]]
-  then
-    echo "$SERVERNAME.cnf already exists! Overwrite?"
-    select yn in "Yes" "No"; do
-      case $yn in
-        Yes ) break;;
-        No ) exit 0;;
-      esac
-    done
-  else
-    touch $CONFDIR/$SERVERNAME.cnf
-fi
+MYVERSHORT=$(cat $VERDIR/CURRENT | cut -d"-" -f1)
+if [[ $RDBMS = $MYVERSHORT ]]
+then
 
-echo "Adding new detaults to $CONFDIR/$SERVERNAME.cnf"
-if [[ -e $CONFDIR/$SERVERNAME.cnf ]]
-  then
-    sed                                   \
-    -e 's;%USER%;'$USER';g;'              \
-    -e 's;%ID%;'$ID';g;'                  \
-    -e 's;%TMPDIR%;'$TMPDIR';g;'          \
-    -e 's;%BASEDIR%;'$BASEDIR';g;'        \
-    -e 's;%PORT%;'$PORT';g;'              \
-    -e 's;%DATADIR%;'$DATADIR';g;'        \
-    -e 's;%SERVERNAME%;'$SERVERNAME';g;'  \
-    -e 's;%TEMPLATEDIR%;'$TEMPLATEDIR';g;'  \
-    $TEMPLATEDIR/template.cnf > $CONFDIR/$SERVERNAME.cnf
+  if [[ -e $CONFDIR/$SERVERNAME.cnf ]]
+    then
+      echo "$SERVERNAME.cnf already exists! Overwrite?"
+      select yn in "Yes" "No"; do
+        case $yn in
+          Yes ) break;;
+          No ) exit 0;;
+        esac
+      done
+    else
+      touch $CONFDIR/$SERVERNAME.cnf
+  fi
 
-    exit 0
-  else
+  echo "Adding new detaults to $CONFDIR/$SERVERNAME.cnf"
+  if [[ -e $CONFDIR/$SERVERNAME.cnf ]]
+    then
+      sed                                   \
+      -e 's;%USER%;'$USER';g;'              \
+      -e 's;%ID%;'$ID';g;'                  \
+      -e 's;%TMPDIR%;'$TMPDIR';g;'          \
+      -e 's;%BASEDIR%;'$BASEDIR';g;'        \
+      -e 's;%PORT%;'$PORT';g;'              \
+      -e 's;%DATADIR%;'$DATADIR';g;'        \
+      -e 's;%SERVERNAME%;'$SERVERNAME';g;'  \
+      -e 's;%TEMPLATEDIR%;'$TEMPLATEDIR';g;'  \
+      -e 's;%RDBMS%;'$RDBMS';g;'  \
+      $TEMPLATEDIR/template.cnf > $CONFDIR/$SERVERNAME.cnf
+
+      exit 0
+    else
     echo "$CONFDIR/$SERVERNAME.cnf not found? Exiting."
     exit 1
+  fi
+
+  else
+    echo "Your current version chosen is not $RDBMS! It's $MYVERSHORT"
+    exit 1
 fi
+
 
 }
 
@@ -261,7 +272,7 @@ fi
 
 if [[ $1 == "build" ]]
   then
-    if [[ $# -ne 4 ]]
+    if [[ $# -ne 5 ]]
       then
         echo "Wrong Parameters."
         help
@@ -270,6 +281,7 @@ if [[ $1 == "build" ]]
         SERVERNAME=$2
         PORT=$3
         ID=$4
+        RDBMS=$5
     fi
 fi
 

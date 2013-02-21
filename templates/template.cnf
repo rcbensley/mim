@@ -13,4 +13,4 @@ log-bin-index                  = %DATADIR%/%SERVERNAME%/mysql-log-bin.index
 log_error                      = %DATADIR%/%SERVERNAME%/error.log
 slow_query_log_file            = %DATADIR%/%SERVERNAME%/slow.log
 
-!include %TEMPLATEDIR%/my.cnf
+!include %TEMPLATEDIR%/%RDBMS%.cnf

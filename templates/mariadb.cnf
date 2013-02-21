@@ -1,11 +1,5 @@
 [mysqld]
 # Environment
-port                    = %PORT
-socket                  = /data/mysql/socket/%NAME.sock
-pid-file                = /data/mysql/socket/%NAME.pid
-datadir                 = /mysql_data/mysql_%NAME
-basedir                 = /data/mysql
-tmpdir                  = /mysql_tmp
 default-time-zone       = '+00:00'
 default-storage-engine  = InnoDB
 character_set_server    = utf8
@@ -13,11 +7,6 @@ sql_mode                = traditional
 local-infile            = ON
 secure_auth             = 1
 event-scheduler         = 1
-
-
-# Tradingscreen
-init_connect            = CALL dba_repl.login_trigger()
-automatic_sp_privileges = 0
 
 
 # Network
@@ -47,10 +36,7 @@ table_open_cache        = 4096
 # Diagnostics
 performance_schema
 general_log             = 0
-general_log_file        = /data/mysql/logs/%NAME_query.log
-log_error               = /data/mysql/logs/%NAME_error.log
 slow_query_log          = 1
-slow_query_log_file     = /data/mysql/logs/%NAME_slowquery.log
 long_query_time         = 2
 log_output              = FILE
 
@@ -66,15 +52,11 @@ sync_binlog             = 1
 expire_logs_days        = 5
 binlog_cache_size       = 1048576
 max_binlog_size         = 209715200
-log-bin                 = /mysql_logs/mysql_%NAME/mysql-bin
-relay_log-index         = /mysql_logs/mysql_%NAME/%NAME-relay-bin.index
-relay_log               = /mysql_logs/mysql_%NAME/%NAME-relay-bin
 log_slave_updates
 skip-slave-start
 
 
 # InnoDB
-innodb_data_home_dir       = /mysql_data/mysql_%NAME
 innodb_flush_method        = O_DIRECT
 innodb_data_file_path      = ibdata1:10M;ibdata2:10M:autoextend
 innodb_buffer_pool_size    = 512M
@@ -107,6 +89,6 @@ aria_log_purge_type        = at_flush
 
 
 # MyISAM
-key_buffer              = 32M
-myisam_sort_buffer_size = 8M
-myisam_recover          = FORCE,BACKUP
+key_buffer                 = 32M
+myisam_sort_buffer_size    = 8M
+myisam_recover             = FORCE,BACKUP
