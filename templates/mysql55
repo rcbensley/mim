@@ -47,3 +47,7 @@ log_output = FILE
 federated
 skip-name-resolve
 skip-slave-start
+
+[mysql-5.5]
+#rpl_semi_sync_master_enabled   = 1
+#rpl_semi_sync_master_timeout   = 10000

@@ -144,9 +144,9 @@ list()
 if [[ -e $CONFDIR ]]
   then
     echo    "Existing configs:"
-    echo    "----------------------------------------------------------------------"
+    echo    "----\t\t------\t\t\t-------"
     echo -e "Name\t\tConfig\t\t\tdatadir"
-    echo    "----------------------------------------------------------------------"
+    echo    "----\t\t------\t\t\t-------"
 
     for conf in $(ls $CONFDIR)
       do
@@ -218,51 +218,38 @@ done
 
 build()
 {
-
-MYVERSHORT=$(cat $VERDIR/CURRENT | cut -d"-" -f1)
-if [[ $RDBMS = $MYVERSHORT ]]
-then
-
-  if [[ -e $CONFDIR/$SERVERNAME.cnf ]]
-    then
-      echo "$SERVERNAME.cnf already exists! Overwrite?"
-      select yn in "Yes" "No"; do
-        case $yn in
-          Yes ) break;;
-          No ) exit 0;;
-        esac
-      done
-    else
-      touch $CONFDIR/$SERVERNAME.cnf
-  fi
-
-  echo "Adding new detaults to $CONFDIR/$SERVERNAME.cnf"
-  if [[ -e $CONFDIR/$SERVERNAME.cnf ]]
-    then
-      sed                                   \
-      -e 's;%USER%;'$USER';g;'              \
-      -e 's;%ID%;'$ID';g;'                  \
-      -e 's;%TMPDIR%;'$TMPDIR';g;'          \
-      -e 's;%BASEDIR%;'$BASEDIR';g;'        \
-      -e 's;%PORT%;'$PORT';g;'              \
-      -e 's;%DATADIR%;'$DATADIR';g;'        \
-      -e 's;%SERVERNAME%;'$SERVERNAME';g;'  \
-      -e 's;%TEMPLATEDIR%;'$TEMPLATEDIR';g;'  \
-      -e 's;%RDBMS%;'$RDBMS';g;'  \
-      $TEMPLATEDIR/template.cnf > $CONFDIR/$SERVERNAME.cnf
-
-      exit 0
-    else
-    echo "$CONFDIR/$SERVERNAME.cnf not found? Exiting."
-    exit 1
-  fi
-
+if [[ -e $CONFDIR/$SERVERNAME.cnf ]]
+  then
+    echo "$SERVERNAME.cnf already exists! Overwrite?"
+    select yn in "Yes" "No"; do
+      case $yn in
+        Yes ) break;;
+        No ) exit 0;;
+      esac
+    done
   else
-    echo "Your current version chosen is not $RDBMS! It's $MYVERSHORT"
-    exit 1
+    touch $CONFDIR/$SERVERNAME.cnf
 fi
 
-
+echo "Adding new detaults to $CONFDIR/$SERVERNAME.cnf"
+if [[ -e $CONFDIR/$SERVERNAME.cnf ]]
+  then
+    sed                                   \
+    -e 's;%USER%;'$USER';g;'              \
+    -e 's;%ID%;'$ID';g;'                  \
+    -e 's;%TMPDIR%;'$TMPDIR';g;'          \
+    -e 's;%BASEDIR%;'$BASEDIR';g;'        \
+    -e 's;%PORT%;'$PORT';g;'              \
+    -e 's;%DATADIR%;'$DATADIR';g;'        \
+    -e 's;%SERVERNAME%;'$SERVERNAME';g;'  \
+    -e 's;%TEMPLATEDIR%;'$TEMPLATEDIR';g;'\
+    -e 's;%VERSION%;'$VERSION';g;'        \
+    $TEMPLATEDIR/template.cnf > $CONFDIR/$SERVERNAME.cnf
+    exit 0
+  else
+    echo "$CONFDIR/$SERVERNAME.cnf not found? Exiting."
+    exit 1
+fi
 }
 
 
@@ -281,7 +268,7 @@ if [[ $1 == "build" ]]
         SERVERNAME=$2
         PORT=$3
         ID=$4
-        RDBMS=$5
+        VERSION=$5
     fi
 fi
 
