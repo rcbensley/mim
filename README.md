@@ -16,4 +16,6 @@ take a look at the 'profile' file. I do an rsync of the 'mydba' directory to ~/d
 * Utilise mysqld_multi and create clustered configs per server version.
 * ...postgresql?
 
-R.I.P mysql_instane
+
+
+R.I.P mysqlmanager
