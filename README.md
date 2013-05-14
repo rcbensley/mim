@@ -1,13 +1,19 @@
-What is this?
-It's a bunch of directories and bash script so far with some mysql configs.
+## What is this?
+A mini-mysql instance manager. I use this for running multiple instances of MySQL or MariaDB. Mostly to test replication.
 
-Why?
-This small setup allows me to quickly deploy MySQL/MariaDB servers for testing.
-I use it for Database design and development and general testing of MySQL/MariaDB
-database servers.
+## What can it do?
+Currently it allows you to switch between a version of MySQL or MariaDB, create configs from templates, and use those configs to create a valid datadir to run a server. See 'mydba/templates/template.cnf' to see what is needed differentiate multiple instances.
 
-What should I do?
-Take a look at 'profile', I source this from my .bashrc file,
-I also rsync a copy of this source to ~/db/
-Put tar.gz files of MySQL or MariaDB in the versions directory and run the 'my'
-bash script.
+## Install
+take a look at the 'profile' file. I do an rsync of the 'mydba' directory to ~/db, and add ~/db/bin to PATH to call the 'my' bash script.
+
+## Future Features
+* Link templates to versions in 'mydba/versions' shift 'CURRENT' dependancy, then able to run multiple versions of MySQL/MariaDB. i.e. 'mydba/templates/mariadb10' infers 'mydba/versions/mariadb10' symlink.
+* Better output formatting.
+* Allow safe (mysqld_safe) and unsafe (mysqld) daemon mode switching. Per Server? Per Cluster?
+* Add LD_LIBRARY_PATH switching for your environment.
+* Resist the OOP urge. But maybe use Python/Perl/Ruby to better parse configs to manage instances?
+* Utilise mysqld_multi and create clustered configs per server version.
+* ...postgresql?
+
+R.I.P mysql_instane
