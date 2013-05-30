@@ -45,29 +45,43 @@ help()
 {
   echo "Usage:
 
-          help, this message
+          help,     this message
 
-          list, show existing configs, and if they are installed
+          temp,     show existing templates.
 
-          switch, change MySQL/MariaDB version or install a new one.
+          list,     show existing configs, and their status.
 
-          build, build a MySQL server config:
-                  i.e. my build foo 3306 100 mariadb
-                  then run 'my install foo'
+          switch,   change MySQL/MariaDB version or install a new one.
 
-          install, install instance from config file in $CONFDIR
-                  my install foo, install the 'foo' instance after it is built.
+          build,    build a MySQL server config:
+                    i.e. my build foo 3306 100 mariadb
+                    then run 'my install foo'
 
-          start, start an instance
-                  my start 3306, start MySQL on port 3306
+          install,  install instance from config file in $CONFDIR
+                    my install foo, install the 'foo' instance after it is built.
+
+          start,    start an instance
+                    my start 3306, start MySQL on port 3306
           
-          stop, stop and instance:
-                  my stop 3306, stop MySQL on port 3306
+          stop,     stop and instance:
+                    my stop 3306, stop MySQL on port 3306
           
-          status, MySQL/MariaDB instance status
-                  my status, for all instances
+          status,   MySQL/MariaDB instance status
+                    my status, for all instances
 
-          Tutorial: switch to install server binaries, build to make a config, then run install to configure.
+          use,      login to a server.
+
+          --
+
+          Tutorial:
+                    Run my switch, to install a server version.
+                    Run my templates, to see what templates are available.
+                    Run my build, create a config using a template.
+                    Run my list, to see your new config.
+                    Run my install, to create a datadir using the template.
+                    Run my start, to start your server.
+                    Run my status, to see the server runing.
+                    Run my use, to login to the server.
           "
     exit 0
 }
@@ -143,10 +157,7 @@ list()
 {
 if [[ -e $CONFDIR ]]
   then
-    echo    "Existing configs:"
-    echo    "----\t\t------\t\t\t-------"
-    echo -e "Name\t\tConfig\t\t\tdatadir"
-    echo    "----\t\t------\t\t\t-------"
+    awk 'BEGIN { printf "%-10s %-10s %s\n", "Name", "Config","datadir"}'
 
     for conf in $(ls $CONFDIR)
       do
@@ -161,10 +172,26 @@ if [[ -e $CONFDIR ]]
             SERVERDIRSTATUS="NOT INSTALLED"
           fi
         
+        awk 'BEGIN { printf "%-10s %-10s %s\n", $SERVERNAME, $SERVERCONF, $SERVERDIRSTATUS}'
         echo -e "$SERVERNAME\t\t$SERVERCONF\t\t$SERVERDIRSTATUS"
       done
   else
     echo "$CONFDIR not found?"
+    exit 1
+fi
+}
+
+temp()
+{
+if [[ -e $TEMPLATEDIR ]]
+  then
+    echo -e "Existing Version Config Templates:"
+    for conf in $(ls $TEMPLATEDIR | grep -v template.cnf)
+      do
+        echo $conf
+      done
+  else
+    echo "$TEMPLATEDIR not found?"
     exit 1
 fi
 }
@@ -243,7 +270,7 @@ if [[ -e $CONFDIR/$SERVERNAME.cnf ]]
     -e 's;%DATADIR%;'$DATADIR';g;'        \
     -e 's;%SERVERNAME%;'$SERVERNAME';g;'  \
     -e 's;%TEMPLATEDIR%;'$TEMPLATEDIR';g;'\
-    -e 's;%VERSION%;'$VERSION';g;'        \
+    -e 's;%TEMPLATE%;'$TEMPLATE';g;'        \
     $TEMPLATEDIR/template.cnf > $CONFDIR/$SERVERNAME.cnf
     exit 0
   else
@@ -268,7 +295,7 @@ if [[ $1 == "build" ]]
         SERVERNAME=$2
         PORT=$3
         ID=$4
-        VERSION=$5
+        TEMPLATE=$5
     fi
 fi
 
