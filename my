@@ -1,51 +1,68 @@
 #!/bin/bash
 
-#
-# Init
-#
+# Bring the Fun-ctions...
 
-if [[ ! -d $DBDIR ]]
-  then
-    echo "db directory not found in: $DBDIR"
-    exit 1
-  else
-    VERDIR=$DBDIR/versions
-    BASEDIR=$VERDIR/mysql
-    CONFDIR=$DBDIR/conf
-    TEMPLATEDIR=$DBDIR/templates
-    DATADIR=$DBDIR/data
-    TMPDIR=/tmp
-fi
+maketemplate()
+{
+echo -e "[mysqld]
+user                           = %USER%
+server-id                      = %ID%
+basedir                        = %BASEDIR%
+tmpdir                         = %TMPDIR%
+port                           = %PORT%
+datadir                        = %DATADIR%/%SERVERNAME%
+socket                         = %DATADIR%/%SERVERNAME%/mysql.sock
+pid_file                       = %DATADIR%/%SERVERNAME%/mysql.pid
+log-bin                        = %DATADIR%/%SERVERNAME%/mysql-log-bin
+log-bin-index                  = %DATADIR%/%SERVERNAME%/mysql-log-bin.index
+log_error                      = %DATADIR%/%SERVERNAME%/error.log
+slow_query_log_file            = %DATADIR%/%SERVERNAME%/slow.log
 
-if [[ ! -d $CONFDIR ]]
-  then
-  #PS3="conf directory not found, create it?"
-  echo "conf directory not found, create it?"
-  select yn in "Yes" "No";
-  do
-    case $yn in
-      "Yes")
-        mkdir $DBDIR/conf
-        ls -l $DBDIR
-	exit 0
-        ;;
-      "No")
-        break
-        ;;
-      * ) echo "Choose an option or ^C to quit.";;
-    esac
-  done
-fi
+!include %TEMPLATEDIR%/%VERSION%.cnf" > $1
+}
 
-#
-# Bring the Fun-ctions
-#
+firstrun()
+{
+  if [[ -z $DBHOME ]]
+    then
+      echo "DBHOME has not been declared. Please export DBHOME in your relevant bash profile file, and re-run."
+    else
+      if [[ ! -d $DBHOME ]]
+        then
+          mkdir $DBHOME
+      fi
+
+      for dir in ${req_dir[@]}
+      do
+        if [[ -d $DBHOME/$dir ]]
+          then
+            echo "$dir already exists in $DBHOME"
+          else
+            echo "creating $DBHOME/$dir"
+            mkdir $DBHOME/$dir
+          fi
+      done
+      if [[ -d $TEMPLATEDIR ]]
+        then
+          maketemplate $TEMPLATEDIR/template.cnf
+      fi
+    fi
+}
+
+getvar()
+{
+  grep $1 $2 | grep -v mysqld | cut -d '=' -f 2 | tail -n 1 | tr -d ' '
+}
 
 help()
 {
   echo "Usage:
 
+          In your profile: export DBHOME=/path/to/DBHOME
+
           help,     this message
+
+          firstrun, setup directories and default template.
 
           temp,     show existing templates.
 
@@ -88,10 +105,9 @@ help()
 
 install()
 {
-  if [[ -d $DATADIR/$SERVERNAME.cnf ]]
+  if [[ -d $DATADIR/$SERVERNAME ]]
     then
-      echo "$DATADIR/$SERVERNAME already exists!"
-      echo "Maybe remove this datadir first?"
+      echo "$DATADIR/$SERVERNAME already exists, aborting"
       exit 1
     else
       mkdir $DATADIR/$SERVERNAME
@@ -124,6 +140,13 @@ stop()
 
 status()
 {
+  CONFCOUNT=$(ls $CONFDIR | wc -l)
+  if [[ $CONFCOUNT < 1 ]]
+    then
+    echo "No configs found in $CONFDIR, run 'my build' first"
+    exit 0
+  fi
+
   for conf in $(ls $CONFDIR/*.cnf)
     do
       SERVERNAME=$(echo $conf | sed 's/.*\///g' | cut -d. -f1)
@@ -155,6 +178,13 @@ use()
 
 list()
 {
+CONFCOUNT=$(ls $CONFDIR | wc -l)
+if [[ $CONFCOUNT < 1 ]]
+  then
+  echo "No configs found in $CONFDIR, run 'my build' first"
+  exit 0
+  fi
+
 if [[ -e $CONFDIR ]]
   then
     awk 'BEGIN { printf "%-10s %-10s %s\n", "Name", "Config","datadir"}'
@@ -196,7 +226,24 @@ if [[ -e $TEMPLATEDIR ]]
 fi
 }
 
+selectversion()
+{
+select MYVER in $VERDIR/*;
+do
+  MYVERDIR=$(echo $MYVER | sed 's/.*\///g')
+  if [[ -d $MYVERDIR ]]
+  then
+    echo "basedir is: $MYVERDIR"
+    export BASEDIR=$MYVERDIR"
+  else
+    tar -xvf $MYVER -C $MYVERDIR
+  fi
+done
+}
+
+
 switch()
+# Unused. A specific version is now set as basedir with selectversion
 {
 select MYVER in $VERDIR/*.gz;
 do
@@ -245,6 +292,15 @@ done
 
 build()
 {
+if [[ -d $DBINSTDIR ]]
+then
+  echo "$DBINSTDIR does not exist, aborting"
+  exit 1
+else
+  selectversion
+fi
+
+
 if [[ -e $CONFDIR/$SERVERNAME.cnf ]]
   then
     echo "$SERVERNAME.cnf already exists! Overwrite?"
@@ -270,7 +326,7 @@ if [[ -e $CONFDIR/$SERVERNAME.cnf ]]
     -e 's;%DATADIR%;'$DATADIR';g;'        \
     -e 's;%SERVERNAME%;'$SERVERNAME';g;'  \
     -e 's;%TEMPLATEDIR%;'$TEMPLATEDIR';g;'\
-    -e 's;%TEMPLATE%;'$TEMPLATE';g;'        \
+    -e 's;%TEMPLATE%;'$TEMPLATE';g;'      \
     $TEMPLATEDIR/template.cnf > $CONFDIR/$SERVERNAME.cnf
     exit 0
   else
@@ -283,6 +339,35 @@ fi
 #
 # MAIN, some damn lazy evaluation!
 #
+# Add check for mysql lib in $LD_LIBRARY_PATH and maybe DYLD_LIBRARY_PATH on mac.
+
+declare -a req_dir=(verions configs templates data)
+
+if [[ -z $DBHOME && -z $DBINSTDIR ]]
+then
+  echo "DBHOME and DBINSTDIR not defined, aborting"
+  exit 1
+else
+  VERDIR=$DBINSTDIR
+  CONFDIR=$DBHOME/configs
+  TEMPLATEDIR=$DBHOME/templates
+  DATADIR=$DBHOME/data
+  if [[ ! -d $DBHOME ]]
+    then
+      echo "$DBHOME does not exist, run setup?"
+      select yn in "Yes" "No"; do
+        case $yn in
+          Yes ) firstrun
+                break
+                ;;
+          No )  echo "please create $DBHOME manually"
+                exit 1
+                ;;
+        esac
+      done
+  fi
+fi
+
 
 if [[ $1 == "build" ]]
   then
