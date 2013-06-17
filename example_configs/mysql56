@@ -1,0 +1,64 @@
+[mysqld]
+default_storage_engine = InnoDB
+character_set_server = utf8
+sql_mode = traditional
+max_allowed_packet = 4M
+max_connect_errors = 100
+tmp_table_size = 32M
+max_heap_table_size = 32M
+query_cache_type = 0
+query_cache_size = 0
+max_connections = 500
+thread_cache_size = 50
+open_files_limit = 65538
+table_definition_cache = 4096
+table_open_cache = 4096
+flush_time = 0
+
+key_buffer_size = 32M
+myisam_recover = FORCE,BACKUP
+
+innodb_flush_method = O_DIRECT
+# record innodb_os_log_written (bytes) for 1 hour at load. Increase total redo log space as necessary.
+innodb_log_files_in_group = 2
+innodb_log_file_size = 16M
+innodb_flush_log_at_trx_commit = 1
+innodb_file_per_table = 1
+innodb_file_format = Barracuda
+innodb_buffer_pool_size = 256M
+innodb_buffer_pool_instances = 8
+innodb_additional_mem_pool_size= 20M
+innodb_log_buffer_size = 8M
+innodb_thread_concurrency = 0
+innodb_doublewrite = 1
+innodb_stats_on_metadata = OFF
+innodb_old_blocks_time = 1000
+
+log_slave_updates = 1
+binlog-row-event-max-size = 8192
+binlog_format = ROW
+binlog_checksum = CRC32
+
+log_slave_updates
+log_queries_not_using_indexes = 1
+slow_query_log = 1
+long_query_time = 10
+log_output = FILE
+federated
+skip-name-resolve
+skip-slave-start
+
+[mysql-5.5]
+#rpl_semi_sync_master_enabled   = 1
+#rpl_semi_sync_master_timeout   = 10000
+
+[mysql-5.6]
+gtid-mode = on                            # GTID
+enforce-gtid-consistency = true           # GTID
+master-info-repository = TABLE            # Crash-safe replication
+relay-log-info-repository = TABLE         # Crash-safe replication
+slave-parallel-workers = 2                # MTS
+binlog-checksum = CRC32                   # Checksums
+master-verify-checksum = 1                # Checksums
+slave-sql-verify-checksum = 1             # Checksums
+binlog-rows-query-log_events = 1          # Informational logs

@@ -1,0 +1,95 @@
+[mysqld]
+# Environment
+default-time-zone       = '+00:00'
+default-storage-engine  = InnoDB
+character_set_server    = utf8
+sql_mode                = traditional
+local-infile            = ON
+secure_auth             = 1
+event-scheduler         = 1
+
+
+# Network
+max_connect_errors      = 18446744073709547520
+max_connections         = 250
+slave_net_timeout       = 60
+max_allowed_packet      = 100M
+net_buffer_length       = 8K
+
+
+# Performance
+flush_time              = 0
+tmp_table_size          = 32M
+max_heap_table_size     = 32M
+query_cache_type        = 0
+query_cache_size        = 0
+thread_cache_size       = 50
+table_cache             = 64
+sort_buffer_size        = 512K
+read_buffer_size        = 256K
+read_rnd_buffer_size    = 512K
+open_files_limit        = 65538
+table_definition_cache  = 4096
+table_open_cache        = 4096
+performance_schema
+
+
+# Diagnostics
+performance_schema
+general_log             = 0
+slow_query_log          = 1
+long_query_time         = 2
+log_output              = FILE
+
+
+# Replication
+binlog-row-event-max-size = 8192
+slave_sql_verify_checksum = 1
+master_verify_checksum  = 1
+binlog_checksum         = 1
+binlog_format           = ROW
+log_slave_updates       = 1
+sync_binlog             = 1
+expire_logs_days        = 5
+binlog_cache_size       = 1048576
+max_binlog_size         = 209715200
+log_slave_updates
+skip-slave-start
+
+
+# InnoDB
+innodb_flush_method        = O_DIRECT
+innodb_data_file_path      = ibdata1:10M;ibdata2:10M:autoextend
+innodb_buffer_pool_size    = 512M
+innodb_additional_mem_pool_size = 20M
+innodb_log_file_size       = 100M
+innodb_log_files_in_group  = 2
+innodb_log_buffer_size     = 8M
+innodb_flush_log_at_trx_commit = 1
+innodb_lock_wait_timeout   = 1000
+innodb_file_per_table      = 1
+innodb_file_format         = Barracuda
+innodb_fast_shutdown       = 0
+innodb_thread_concurrency  = 0
+innodb_doublewrite         = 1
+innodb_stats_on_metadata   = OFF
+innodb_old_blocks_time     = 1000
+
+
+# Aria
+aria                       = ON
+row_format                 = PAGE
+aria_pagecache_age_threshold = 1000
+aria_pagecache_buffer_size = 128M
+aria_sort_buffer_size      = 8M
+aria_group_commit          = hard
+aria_group_commit_interval = 0
+aria_recover               = FORCE,BACKUP
+aria_block_size            = 8192
+aria_log_purge_type        = at_flush
+
+
+# MyISAM
+key_buffer                 = 32M
+myisam_sort_buffer_size    = 8M
+myisam_recover             = FORCE,BACKUP
