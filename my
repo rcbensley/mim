@@ -2,24 +2,6 @@
 
 # Bring the Fun-ctions...
 
-maketemplate()
-{
-echo -e "[mysqld]
-user                           = %USER%
-server-id                      = %ID%
-basedir                        = %BASEDIR%
-tmpdir                         = %TMPDIR%
-port                           = %PORT%
-datadir                        = %DATADIR%/%SERVERNAME%
-socket                         = %DATADIR%/%SERVERNAME%/mysql.sock
-pid_file                       = %DATADIR%/%SERVERNAME%/mysql.pid
-log-bin                        = %DATADIR%/%SERVERNAME%/mysql-log-bin
-log-bin-index                  = %DATADIR%/%SERVERNAME%/mysql-log-bin.index
-log_error                      = %DATADIR%/%SERVERNAME%/error.log
-slow_query_log_file            = %DATADIR%/%SERVERNAME%/slow.log
-
-!include %TEMPLATEDIR%/%VERSION%.cnf" > $1
-}
 
 firstrun()
 {
@@ -42,10 +24,6 @@ firstrun()
             mkdir $DBHOME/$dir
           fi
       done
-      if [[ -d $TEMPLATEDIR ]]
-        then
-          maketemplate $TEMPLATEDIR/template.cnf
-      fi
     fi
 }
 
@@ -64,12 +42,6 @@ help()
 
           firstrun, setup directories and default template.
 
-          temp,     show existing templates.
-
-          list,     show existing configs, and their status.
-
-          switch,   change MySQL/MariaDB version or install a new one.
-
           build,    build a MySQL server config:
                     i.e. my build foo 3306 100 mariadb
                     then run 'my install foo'
@@ -77,14 +49,10 @@ help()
           install,  install instance from config file in $CONFDIR
                     my install foo, install the 'foo' instance after it is built.
 
-          start,    start an instance
-                    my start 3306, start MySQL on port 3306
-          
-          stop,     stop and instance:
-                    my stop 3306, stop MySQL on port 3306
-          
           status,   MySQL/MariaDB instance status
                     my status, for all instances
+
+          start/stop/restart
 
           use,      login to a server.
 
@@ -213,7 +181,10 @@ fi
 
 temp()
 {
-if [[ -e $TEMPLATEDIR ]]
+  echo "deprecated"
+  exit 0
+
+if [[ -d $TEMPLATEDIR ]]
   then
     echo -e "Existing Version Config Templates:"
     for conf in $(ls $TEMPLATEDIR | grep -v template.cnf)
@@ -230,21 +201,36 @@ selectversion()
 {
 select MYVER in $VERDIR/*;
 do
+  MYVERTAR=$MYVER
   MYVERDIR=$(echo $MYVER | sed 's/.*\///g')
   if [[ -d $MYVERDIR ]]
   then
     echo "basedir is: $MYVERDIR"
-    export BASEDIR=$MYVERDIR"
+    export BASEDIR=$MYVERDIR
   else
     tar -xvf $MYVER -C $MYVERDIR
   fi
 done
 }
 
+selecttemplate()
+{
+select MYTEMPLATE in $TEMPLATEDIR/*;
+do
+  if [[ -d $TEMPLATEDIR ]]
+  then
+    CONFIGTEMPLATE=$MYTEMPLATE
+  fi
+done
+}
+
 
 switch()
-# Unused. A specific version is now set as basedir with selectversion
 {
+  # Exit, this is unused
+  echo "This command is deprecated, build, now sets a specific basedir"
+  exit 0
+
 select MYVER in $VERDIR/*.gz;
 do
 
@@ -297,47 +283,59 @@ then
   echo "$DBINSTDIR does not exist, aborting"
   exit 1
 else
+  selecttemplate
   selectversion
 fi
 
+if [[ -z $BASEDIR && -z $CONFIGTEMPLATE ]]
+then
+  echo "Need a Version and Config Template, aborting"
+  exit 1
 
-if [[ -e $CONFDIR/$SERVERNAME.cnf ]]
-  then
-    echo "$SERVERNAME.cnf already exists! Overwrite?"
-    select yn in "Yes" "No"; do
-      case $yn in
-        Yes ) break;;
-        No ) exit 0;;
-      esac
-    done
-  else
-    touch $CONFDIR/$SERVERNAME.cnf
-fi
+else
+  if [[ -e $CONFDIR/$SERVERNAME.cnf ]]
+    then
+      echo "$SERVERNAME.cnf already exists! Overwrite?"
+      select yn in "Yes" "No"; do
+        case $yn in
+          Yes ) break;;
+          No ) exit 0;;
+        esac
+      done
+  fi
 
-echo "Adding new detaults to $CONFDIR/$SERVERNAME.cnf"
-if [[ -e $CONFDIR/$SERVERNAME.cnf ]]
-  then
-    sed                                   \
-    -e 's;%USER%;'$USER';g;'              \
-    -e 's;%ID%;'$ID';g;'                  \
-    -e 's;%TMPDIR%;'$TMPDIR';g;'          \
-    -e 's;%BASEDIR%;'$BASEDIR';g;'        \
-    -e 's;%PORT%;'$PORT';g;'              \
-    -e 's;%DATADIR%;'$DATADIR';g;'        \
-    -e 's;%SERVERNAME%;'$SERVERNAME';g;'  \
-    -e 's;%TEMPLATEDIR%;'$TEMPLATEDIR';g;'\
-    -e 's;%TEMPLATE%;'$TEMPLATE';g;'      \
-    $TEMPLATEDIR/template.cnf > $CONFDIR/$SERVERNAME.cnf
-    exit 0
-  else
-    echo "$CONFDIR/$SERVERNAME.cnf not found? Exiting."
-    exit 1
+  echo "Adding new detaults to $CONFDIR/$SERVERNAME.cnf"
+  if [[ -e $CONFDIR/$SERVERNAME.cnf ]]
+    then
+        echo -e "
+[mysqld]
+!include $TEMPLATEDIR/$CONFIGTEMPLATE.cnf
+
+user                           = $USER
+server-id                      = $ID
+basedir                        = $BASEDIR
+tmpdir                         = $TMPDIR
+port                           = $PORT
+datadir                        = $DATADIR/$SERVERNAME
+socket                         = $DATADIR/$SERVERNAME/mysql.sock
+pid_file                       = $DATADIR/$SERVERNAME/mysql.pid
+log-bin                        = $DATADIR/$SERVERNAME/mysql-log-bin
+log-bin-index                  = $DATADIR/$SERVERNAME/mysql-log-bin.index
+log_error                      = $DATADIR/$SERVERNAME/error.log
+slow_query_log_file            = $DATADIR/$SERVERNAME/slow.log
+        " > $CONFDIR/$SERVERNAME.cnf
+      exit 0
+    else
+      echo "$CONFDIR/$SERVERNAME.cnf not found? Exiting."
+      exit 1
+  fi
+
 fi
 }
 
 
 #
-# MAIN, some damn lazy evaluation!
+# MAIN, warning, lazy evaluation!
 #
 # Add check for mysql lib in $LD_LIBRARY_PATH and maybe DYLD_LIBRARY_PATH on mac.
 
@@ -373,7 +371,7 @@ if [[ $1 == "build" ]]
   then
     if [[ $# -ne 5 ]]
       then
-        echo "Wrong Parameters."
+        echo "Wrong Parameters"
         help
         exit 1
       else
@@ -388,7 +386,7 @@ if [[ $1 == "install" ]]
   then
     if [[ $# -ne 2 ]]
       then
-        echo "Wrong Paramters."
+        echo "Wrong Paramters"
         help
         exit 1
       else
@@ -408,7 +406,7 @@ else
         SERVERNAME=$2
         $1
       else
-        echo "That is not a valid command."
+        echo "That is not a valid command"
         help
         exit 1
     fi
