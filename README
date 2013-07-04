@@ -1,20 +1,20 @@
 ## What is this?
-A mini-mysql instance manager. I use this for running multiple instances of MySQL or MariaDB. Mostly to test replication.
+A mini-mysql instance manager. I use this for running multiple instances of MySQL or MariaDB. Mostly to test replication and new features.
 
 ## What can it do?
-Currently it allows you to switch between a version of MySQL or MariaDB, create configs from templates, and use those configs to create a valid datadir to run a server. See 'mydba/templates/template.cnf' to see what is needed differentiate multiple instances.
+mydba, through the script my, provides a simple insterface to build a basic config, then use that to install and start a server. Servers are differentiated by port number and an instance name of your choosing. mydba also now supports multiple different versions, as the basdir variable is written to each config.
 
 ## Install
-take a look at the 'profile' file. I do an rsync of the 'mydba' directory to ~/db, and add ~/db/bin to PATH to call the 'my' bash script.
+put the my script in a directory already in your $PATH variable, I typically use ~/bin
 
 ## Future Features
-* Link templates to versions in 'mydba/versions' shift 'CURRENT' dependancy, then able to run multiple versions of MySQL/MariaDB. i.e. 'mydba/templates/mariadb10' infers 'mydba/versions/mariadb10' symlink.
+* Add support for GTID management for MariaDB 10.x
+* Add replication cluster creation using multi-source replication and GTID in MariaDB 10.x
 * Better output formatting.
 * Allow safe (mysqld_safe) and unsafe (mysqld) daemon mode switching. Per Server? Per Cluster?
 * Add LD_LIBRARY_PATH switching for your environment.
-* Resist the OOP urge. But maybe use Python/Perl/Ruby to better parse configs to manage instances?
-* Utilise mysqld_multi and create clustered configs per server version.
-* ...postgresql?
+* Redo this in python/ruby/perl/lua ? Bash is certainly more portable.
+
 
 
 

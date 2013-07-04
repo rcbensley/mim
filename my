@@ -7,11 +7,11 @@ firstrun()
 {
   if [[ -z $DBHOME ]]
     then
-      echo "DBHOME has not been declared. Please export DBHOME in your relevant bash profile file, and re-run."
+      echo "DBHOME has not been declared"
     else
       if [[ ! -d $DBHOME ]]
         then
-          mkdir $DBHOME
+          mkdir -p $DBHOME
       fi
 
       for dir in ${req_dir[@]}
@@ -34,41 +34,29 @@ getvar()
 
 help()
 {
-  echo "Usage:
+echo "Usage:
 
-          In your profile: export DBHOME=/path/to/DBHOME
+  help,     this message
 
-          help,     this message
+  firstrun, setup directories and default template.
 
-          firstrun, setup directories and default template.
+  build,    build a MySQL server config:
+            i.e. my build foo 3306 100
 
-          build,    build a MySQL server config:
-                    i.e. my build foo 3306 100 mariadb
-                    then run 'my install foo'
+  install,  install instance from built config
+            i.e. my install foo
 
-          install,  install instance from config file in $CONFDIR
-                    my install foo, install the 'foo' instance after it is built.
+  status,   MySQL/MariaDB instance status
+            my status, for all instances
 
-          status,   MySQL/MariaDB instance status
-                    my status, for all instances
+  start/stop
 
-          start/stop/restart
+  use,      login to a server
+            i.e. my use foo
 
-          use,      login to a server.
-
-          --
-
-          Tutorial:
-                    Run my switch, to install a server version.
-                    Run my templates, to see what templates are available.
-                    Run my build, create a config using a template.
-                    Run my list, to see your new config.
-                    Run my install, to create a datadir using the template.
-                    Run my start, to start your server.
-                    Run my status, to see the server runing.
-                    Run my use, to login to the server.
-          "
-    exit 0
+  --
+"
+  exit 0
 }
 
 install()
@@ -80,7 +68,7 @@ install()
     else
       mkdir $DATADIR/$SERVERNAME
       CONFIGFILE=$CONFDIR/$SERVERNAME.cnf
-      cd $VERDIR/mysql/
+      cd $DBINSTDIR/mysql/
       ./scripts/mysql_install_db --defaults-file=$CONFIGFILE 2>&1 | egrep -i 'mysqladmin|secure'
       exit 0
   fi
@@ -88,9 +76,8 @@ install()
 
 start()
 {
-  CONFIGFILE=$CONFDIR/$SERVERNAME.cnf
-  PORT=$(cat $CONFIGFILE | grep port | awk '{print $3}')
-  echo "Starting $SERVERNAME on $PORT"
+  SERVERPORT=$(getvar port $CONFIGFILE)
+  echo "Starting $SERVERNAME on $SERVERPORT"
   mysqld_safe --defaults-file=$CONFIGFILE --ledir=$BASEDIR/bin > /tmp/$SERVERNAME.log 2>&1 &
   sleep 2
   cat /tmp/$SERVERNAME.log
@@ -99,8 +86,8 @@ start()
 
 stop()
 {
-  SERVERPORT=$(cat $CONFIGFILE | grep -i port | awk '{print $3}')
-  SERVERSOCK=$(cat $CONFIGFILE | grep -i socket | awk '{print $3}')
+  SERVERPORT=$(getvar port $CONFIGFILE)
+  SERVERSOCK=$(getvar socket $CONFIGFILE)
   echo "Stopping $SERVERNAME on $SERVERPORT"
   mysqladmin -u root --socket=$SERVERSOCK -P $SERVERPORT shutdown
   exit 0
@@ -117,9 +104,9 @@ status()
 
   for conf in $(ls $CONFDIR/*.cnf)
     do
-      SERVERNAME=$(echo $conf | sed 's/.*\///g' | cut -d. -f1)
-      SERVERPORT=$(cat $conf | grep -i port | awk '{print $3}')
-      SERVERSOCK=$(cat $conf | grep -i socket | awk '{print $3}')
+      SERVERNAME=$(basename $conf .cnf)
+      SERVERPORT=$(getvar port $CONFIGFILE)
+      SERVERSOCK=$(getvar socket $CONFIGFILE)
       if [[ -e $DATADIR/$SERVERNAME/mysql.pid ]]
         then
           MASTERSTATUS=$(mysql -uroot -P$SERVERPORT --socket=$SERVERSOCK -Be "SHOW MASTER STATUS;" | tail -1)
@@ -139,77 +126,23 @@ status()
 
 use()
 {
-  SERVERPORT=$(cat $CONFIGFILE | grep -i port | awk '{print $3}')
-  SERVERSOCK=$(cat $CONFIGFILE | grep -i socket | awk '{print $3}')
+  SERVERPORT=$(getvar port $CONFIGFILE)
+  SERVERSOCK=$(getvar socket $CONFIGFILE)
   mysql -P $SERVERPORT -uroot --socket=$SERVERSOCK
-}
-
-list()
-{
-CONFCOUNT=$(ls $CONFDIR | wc -l)
-if [[ $CONFCOUNT < 1 ]]
-  then
-  echo "No configs found in $CONFDIR, run 'my build' first"
-  exit 0
-  fi
-
-if [[ -e $CONFDIR ]]
-  then
-    awk 'BEGIN { printf "%-10s %-10s %s\n", "Name", "Config","datadir"}'
-
-    for conf in $(ls $CONFDIR)
-      do
-        SERVERNAME=$(echo $conf | sed 's/.*\///g' | cut -d. -f1)
-        SERVERCONF=$(echo $conf | sed 's/.*\///g')
-        SERVERDIR=$(cat $CONFDIR/$conf | grep -i datadir | awk '{print $3}')
-
-        if [[ -d $DATADIR/$SERVERNAME ]]
-          then
-            SERVERDIRSTATUS="$SERVERDIR"
-          else
-            SERVERDIRSTATUS="NOT INSTALLED"
-          fi
-        
-        awk 'BEGIN { printf "%-10s %-10s %s\n", $SERVERNAME, $SERVERCONF, $SERVERDIRSTATUS}'
-        echo -e "$SERVERNAME\t\t$SERVERCONF\t\t$SERVERDIRSTATUS"
-      done
-  else
-    echo "$CONFDIR not found?"
-    exit 1
-fi
-}
-
-temp()
-{
-  echo "deprecated"
-  exit 0
-
-if [[ -d $TEMPLATEDIR ]]
-  then
-    echo -e "Existing Version Config Templates:"
-    for conf in $(ls $TEMPLATEDIR | grep -v template.cnf)
-      do
-        echo $conf
-      done
-  else
-    echo "$TEMPLATEDIR not found?"
-    exit 1
-fi
 }
 
 selectversion()
 {
-select MYVER in $VERDIR/*;
+select MYVER in $DBINSTDIR/*;
 do
-  MYVERTAR=$MYVER
-  MYVERDIR=$(echo $MYVER | sed 's/.*\///g')
-  if [[ -d $MYVERDIR ]]
+  BASEDIR=$(basename $MYVER .tar.gz)
+  if [[ ! -d $BASEDIR ]]
   then
-    echo "basedir is: $MYVERDIR"
-    export BASEDIR=$MYVERDIR
-  else
-    tar -xvf $MYVER -C $MYVERDIR
+    echo "$BASEDIR not found, extracting $MYVER"
+    tar -xf $MYVER -C $DBINSTDIR
   fi
+  echo "Using $MYVER"
+  break
 done
 }
 
@@ -217,68 +150,15 @@ selecttemplate()
 {
 select MYTEMPLATE in $TEMPLATEDIR/*;
 do
-  if [[ -d $TEMPLATEDIR ]]
-  then
-    CONFIGTEMPLATE=$MYTEMPLATE
-  fi
-done
-}
-
-
-switch()
-{
-  # Exit, this is unused
-  echo "This command is deprecated, build, now sets a specific basedir"
-  exit 0
-
-select MYVER in $VERDIR/*.gz;
-do
-
-  MYVERTAR=$(echo $MYVER | sed 's/.*\///g')
-  MYVERSTR=$(echo $MYVERTAR | sed 's/.tar.gz//')
-
-  if [[ -e $VERDIR/CURRENT ]]
-    then
-       CURVER=`cat $VERDIR/CURRENT`
-       echo "Current version is: $CURVER"
-
-       if [[ -d $VERDIR/$CURVER ]]
-         then
-          echo "Deleting $VERDIR/$CURVER"
-          rm -Rf $VERDIR/$CURVER
-
-          if [[ -h $VERDIR/mysql ]]
-            then
-              unlink $VERDIR/mysql
-          fi
-
-         else
-           echo "Current version found, but no directory?"
-       fi
-    else
-      echo "No current version, installing new..."
-  fi
-
-  echo $MYVERSTR > $VERDIR/CURRENT
-
-  tar -xf $VERDIR/$MYVERTAR -C $VERDIR
-
-  if [[ -d $VERDIR/$MYVERSTR ]]
-    then
-      ln -s $VERDIR/$MYVERSTR $VERDIR/mysql
-  else
-    echo "Extraction failed?"
-    exit 1
-  fi
-
-      echo "Current version is now: `cat $VERDIR/CURRENT`"
-      break
+  export CONFIGTEMPLATE=$MYTEMPLATE
+  echo "Using $CONFIGTEMPLATE"
+  break
 done
 }
 
 build()
 {
-if [[ -d $DBINSTDIR ]]
+if [[ ! -d $DBINSTDIR ]]
 then
   echo "$DBINSTDIR does not exist, aborting"
   exit 1
@@ -311,19 +191,19 @@ else
 [mysqld]
 !include $TEMPLATEDIR/$CONFIGTEMPLATE.cnf
 
-user                           = $USER
-server-id                      = $ID
-basedir                        = $BASEDIR
-tmpdir                         = $TMPDIR
-port                           = $PORT
-datadir                        = $DATADIR/$SERVERNAME
-socket                         = $DATADIR/$SERVERNAME/mysql.sock
-pid_file                       = $DATADIR/$SERVERNAME/mysql.pid
-log-bin                        = $DATADIR/$SERVERNAME/mysql-log-bin
-log-bin-index                  = $DATADIR/$SERVERNAME/mysql-log-bin.index
-log_error                      = $DATADIR/$SERVERNAME/error.log
-slow_query_log_file            = $DATADIR/$SERVERNAME/slow.log
-        " > $CONFDIR/$SERVERNAME.cnf
+user                = $USER
+server-id           = $ID
+basedir             = $BASEDIR
+tmpdir              = $TMPDIR
+port                = $PORT
+datadir             = $DATADIR/$SERVERNAME
+socket              = $DATADIR/$SERVERNAME/mysql.sock
+pid_file            = $DATADIR/$SERVERNAME/mysql.pid
+log-bin             = $DATADIR/$SERVERNAME/mysql-log-bin
+log-bin-index       = $DATADIR/$SERVERNAME/mysql-log-bin.index
+log_error           = $DATADIR/$SERVERNAME/error.log
+slow_query_log_file = $DATADIR/$SERVERNAME/slow.log
+" > $CONFDIR/$SERVERNAME.cnf
       exit 0
     else
       echo "$CONFDIR/$SERVERNAME.cnf not found? Exiting."
@@ -334,19 +214,34 @@ fi
 }
 
 
-#
-# MAIN, warning, lazy evaluation!
-#
+# MAIN with lazy evaluation
 # Add check for mysql lib in $LD_LIBRARY_PATH and maybe DYLD_LIBRARY_PATH on mac.
 
 declare -a req_dir=(verions configs templates data)
+ERRORCOUNTER=0
 
-if [[ -z $DBHOME && -z $DBINSTDIR ]]
+if [[ -z $DBHOME ]]
 then
-  echo "DBHOME and DBINSTDIR not defined, aborting"
-  exit 1
+  echo "DBHOME not defined"
+  let ERRORCOUNTER+=1
+fi
+
+if [[ -z $DBINSTDIR ]]
+then
+  echo "DBHOME not defined"
+  let ERRORCOUNTER+=1
+elif [[ ! -d $DBINSTDIR ]]
+then
+  echo "DBINSTDIR defined, but directory does not exist"
+  let ERRORCOUNTER+=1
+fi
+
+if [[ $ERRORCOUNTER -ne 0 ]]
+then
+  echo "Errors encountred, aborting"
+  echo "DBHOME: $DBHOME"
+  echo "DBHOME: $DBINSTDIR"
 else
-  VERDIR=$DBINSTDIR
   CONFDIR=$DBHOME/configs
   TEMPLATEDIR=$DBHOME/templates
   DATADIR=$DBHOME/data
@@ -366,10 +261,9 @@ else
   fi
 fi
 
-
 if [[ $1 == "build" ]]
   then
-    if [[ $# -ne 5 ]]
+    if [[ $# -ne 4 ]]
       then
         echo "Wrong Parameters"
         help
@@ -378,7 +272,6 @@ if [[ $1 == "build" ]]
         SERVERNAME=$2
         PORT=$3
         ID=$4
-        TEMPLATE=$5
     fi
 fi
 
