@@ -29,7 +29,7 @@ firstrun()
 
 getvar()
 {
-  grep $1 $2 | grep -v mysqld | cut -d '=' -f 2 | tail -n 1 | tr -d ' '
+  grep -w $1 $2 | grep -v mysqld | cut -d '=' -f 2 | tail -n 1 | tr -d ' '
 }
 
 help()
@@ -133,9 +133,9 @@ use()
 
 selectversion()
 {
-select MYVER in $DBINSTDIR/*;
+select MYVER in $DBINSTDIR/*.tar.gz;
 do
-  BASEDIR=$(basename $MYVER .tar.gz)
+  BASEDIR=$DBINSTDIR/$(basename $MYVER .tar.gz)
   if [[ ! -d $BASEDIR ]]
   then
     echo "$BASEDIR not found, extracting $MYVER"
@@ -182,6 +182,7 @@ else
           No ) exit 0;;
         esac
       done
+    else touch $CONFDIR/$SERVERNAME.cnf
   fi
 
   echo "Adding new detaults to $CONFDIR/$SERVERNAME.cnf"
