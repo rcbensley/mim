@@ -61,12 +61,12 @@ echo "Usage:
 
 install()
 {
-  if [[ -d $DATADIR/$SERVERNAME ]]
+  if [[ -d $DATADIR ]]
     then
-      echo "$DATADIR/$SERVERNAME already exists, aborting"
+      echo "$DATADIR already exists, aborting"
       exit 1
     else
-      mkdir $DATADIR/$SERVERNAME
+      mkdir -p $DATADIR/tmp
       CONFIGFILE=$CONFDIR/$SERVERNAME.cnf
       cd $DBINSTDIR/mysql/
       ./scripts/mysql_install_db --defaults-file=$CONFIGFILE 2>&1 | egrep -i 'mysqladmin|secure'
@@ -107,7 +107,7 @@ status()
       SERVERNAME=$(basename $conf .cnf)
       SERVERPORT=$(getvar port $CONFIGFILE)
       SERVERSOCK=$(getvar socket $CONFIGFILE)
-      if [[ -e $DATADIR/$SERVERNAME/mysql.pid ]]
+      if [[ -e $DATADIR/mysql.pid ]]
         then
           MASTERSTATUS=$(mysql -uroot -P$SERVERPORT --socket=$SERVERSOCK -Be "SHOW MASTER STATUS;" | tail -1)
           SERVERSTATUS=$(mysql -uroot -P$SERVERPORT --socket=$SERVERSOCK -Be "SELECT 'ONLINE';" | tail -1)
@@ -197,13 +197,13 @@ server-id           = $ID
 basedir             = $BASEDIR
 tmpdir              = $TMPDIR
 port                = $PORT
-datadir             = $DATADIR/$SERVERNAME
-socket              = $DATADIR/$SERVERNAME/mysql.sock
-pid_file            = $DATADIR/$SERVERNAME/mysql.pid
-log-bin             = $DATADIR/$SERVERNAME/mysql-log-bin
-log-bin-index       = $DATADIR/$SERVERNAME/mysql-log-bin.index
-log_error           = $DATADIR/$SERVERNAME/error.log
-slow_query_log_file = $DATADIR/$SERVERNAME/slow.log
+datadir             = $DATADIR
+socket              = $DATADIR/mysql.sock
+pid_file            = $DATADIR/mysql.pid
+log-bin             = $DATADIR/mysql-log-bin
+log-bin-index       = $DATADIR/mysql-log-bin.index
+log_error           = $DATADIR/error.log
+slow_query_log_file = $DATADIR/slow.log
 " > $CONFDIR/$SERVERNAME.cnf
       exit 0
     else
@@ -245,7 +245,6 @@ then
 else
   CONFDIR=$DBHOME/configs
   TEMPLATEDIR=$DBHOME/templates
-  DATADIR=$DBHOME/data
   if [[ ! -d $DBHOME ]]
     then
       echo "$DBHOME does not exist, run setup?"
@@ -273,6 +272,8 @@ if [[ $1 == "build" ]]
         SERVERNAME=$2
         PORT=$3
         ID=$4
+        DATADIR=$DBHOME/data/$SERVERNAME
+        TMPDIR=$DATADIR/tmp
     fi
 fi
 
@@ -286,6 +287,8 @@ if [[ $1 == "install" ]]
       else
         CONFIGFILE=$CONFDIR/$2.cnf
         SERVERNAME=$2
+        DATADIR=$DBHOME/data/$SERVERNAME
+        TMPDIR=$DATADIR/tmp
     fi
 fi
 
