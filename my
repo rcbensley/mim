@@ -68,7 +68,8 @@ install()
     else
       mkdir -p $DATADIR/tmp
       CONFIGFILE=$CONFDIR/$SERVERNAME.cnf
-      cd $DBINSTDIR/mysql/
+      BASEDIR=$(getvar basedir $CONFIGFILE)
+      cd $BASEDIR
       ./scripts/mysql_install_db --defaults-file=$CONFIGFILE 2>&1 | egrep -i 'mysqladmin|secure'
       exit 0
   fi
@@ -95,8 +96,7 @@ stop()
 
 status()
 {
-  CONFCOUNT=$(ls $CONFDIR | wc -l)
-  if [[ $CONFCOUNT < 1 ]]
+  if [[  $(ls $CONFDIR | wc -l | tr -d ' ') < 1 ]]
     then
     echo "No configs found in $CONFDIR, run 'my build' first"
     exit 0
@@ -105,8 +105,8 @@ status()
   for conf in $(ls $CONFDIR/*.cnf)
     do
       SERVERNAME=$(basename $conf .cnf)
-      SERVERPORT=$(getvar port $CONFIGFILE)
-      SERVERSOCK=$(getvar socket $CONFIGFILE)
+      SERVERPORT=$(getvar port $conf)
+      SERVERSOCK=$(getvar socket $conf)
       if [[ -e $DATADIR/mysql.pid ]]
         then
           MASTERSTATUS=$(mysql -uroot -P$SERVERPORT --socket=$SERVERSOCK -Be "SHOW MASTER STATUS;" | tail -1)
