@@ -78,8 +78,9 @@ install()
 start()
 {
   SERVERPORT=$(getvar port $CONFIGFILE)
+  BASEDIR=$(getvar basedir $CONFIGFILE)
   echo "Starting $SERVERNAME on $SERVERPORT"
-  mysqld_safe --defaults-file=$CONFIGFILE --ledir=$BASEDIR/bin > /tmp/$SERVERNAME.log 2>&1 &
+  $BASEDIR/bin/mysqld_safe --defaults-file=$CONFIGFILE --ledir=$BASEDIR/bin > /tmp/$SERVERNAME.log 2>&1 &
   sleep 2
   cat /tmp/$SERVERNAME.log
   exit 0
@@ -89,8 +90,9 @@ stop()
 {
   SERVERPORT=$(getvar port $CONFIGFILE)
   SERVERSOCK=$(getvar socket $CONFIGFILE)
+  BASEDIR=$(getvar basedir $CONFIGFILE)
   echo "Stopping $SERVERNAME on $SERVERPORT"
-  mysqladmin -u root --socket=$SERVERSOCK -P $SERVERPORT shutdown
+  $BASEDIR/bin/mysqladmin -u root --socket=$SERVERSOCK -P $SERVERPORT shutdown
   exit 0
 }
 
@@ -107,10 +109,12 @@ status()
       SERVERNAME=$(basename $conf .cnf)
       SERVERPORT=$(getvar port $conf)
       SERVERSOCK=$(getvar socket $conf)
-      if [[ -e $DATADIR/mysql.pid ]]
+      SERVERPID=$(getvar pid_file $conf)
+      MYSQLBIN=$(getvar basedir $conf)/bin/mysql
+      if [[ -e $SERVERPID ]]
         then
-          MASTERSTATUS=$(mysql -uroot -P$SERVERPORT --socket=$SERVERSOCK -Be "SHOW MASTER STATUS;" | tail -1)
-          SERVERSTATUS=$(mysql -uroot -P$SERVERPORT --socket=$SERVERSOCK -Be "SELECT 'ONLINE';" | tail -1)
+          MASTERSTATUS=$($MYSQLBIN -uroot -P$SERVERPORT --socket=$SERVERSOCK -Be "SHOW MASTER STATUS;" | tail -1)
+          SERVERSTATUS=$($MYSQLBIN -uroot -P$SERVERPORT --socket=$SERVERSOCK -Be "SELECT 'ONLINE';" | tail -1)
           MASTERLOGFILE=$(echo $MASTERSTATUS | awk '{print $1}')
           MASTERLOGPOS=$(echo $MASTERSTATUS | awk '{print $2}')
           MASTERDO=$(echo $MASTERSTATUS | awk '{print $3}')
@@ -128,7 +132,8 @@ use()
 {
   SERVERPORT=$(getvar port $CONFIGFILE)
   SERVERSOCK=$(getvar socket $CONFIGFILE)
-  mysql -P $SERVERPORT -uroot --socket=$SERVERSOCK
+  BASEDIR=$(getvar basedir $CONFIGFILE)
+  $BASEDIR/bin/mysql -P $SERVERPORT -uroot --socket=$SERVERSOCK
 }
 
 selectversion()
@@ -240,8 +245,7 @@ fi
 if [[ $ERRORCOUNTER -ne 0 ]]
 then
   echo "Errors encountred, aborting"
-  echo "DBHOME: $DBHOME"
-  echo "DBHOME: $DBINSTDIR"
+  exit 0
 else
   CONFDIR=$DBHOME/configs
   TEMPLATEDIR=$DBHOME/templates
