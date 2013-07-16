@@ -1,0 +1,40 @@
+[client]
+default-character-set = utf8
+show-warnings
+
+[mysql]
+default-character-set = utf8
+show-warnings
+
+[mysqldump]
+quick
+routines
+triggers
+events
+single-transaction
+
+[mysqld]
+# UTF8
+character-set-server = utf8
+init-connect = 'SET NAMES utf8'
+collation-server = utf8_general_ci
+
+# UTC
+default-time-zone = '+00:00'
+
+# Replication
+binlog_format = ROW
+skip-slave-start
+
+# Network
+max_connect_errors = 1000000
+max_connections = 1000
+
+# ACID
+sql_mode = traditional
+innodb_flush_log_at_trx_commit = 1
+innodb_flush_method = O_DIRECT
+innodb_file_per_table= 1
+innodb_doublewrite = 1
+innodb_strict_mode = 1
+sync_binlog = 1
