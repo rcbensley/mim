@@ -1,19 +1,20 @@
 ## What is this?
-A mini-mysql instance manager. I use this for running multiple instances of MySQL or MariaDB. Mostly to test replication and new features.
+A simple mysql instance manager. Mostly for testing features and running multiple instances of MySQL/MariaDB, even multiple versions.
+Comes in handy when you need to test replication features for example, quickly.
 
-## What can it do?
-mydba, through the script my, provides a simple insterface to build a basic config, then use that to install and start a server. Servers are differentiated by port number and an instance name of your choosing. mydba also now supports multiple different versions, as the basdir variable is written to each config.
 
-## Install
-put the my script in a directory already in your $PATH variable, I typically use ~/bin
+## How do I use it?
+Define the following variables:
+* export DBHOME=/path/do/dir, an empty directory to be used for configs, templates, datadir by the 'my' script.
+* export DBINSTDIR=/path/do/dir, a directory where you are keeping tar.gz files of Mysql or MariaDB
+* Finally put the 'my' script somewhere that is in your $PATH variable. I normally used ~/bin
 
-## Future Features
-* Add support for GTID management for MariaDB 10.x
-* Add replication cluster creation using multi-source replication and GTID in MariaDB 10.x
-* Better output formatting.
-* Allow safe (mysqld_safe) and unsafe (mysqld) daemon mode switching. Per Server? Per Cluster?
-* Add LD_LIBRARY_PATH switching for your environment.
-* Redo this in python/ruby/perl/lua ? Bash is certainly more portable.
+
+## Future features
+* MySQL 5.6+ and MariaDB 10+ GTID management for testing failover.
+* Client path switching
+* LD_LIBRARY_path switching
+* ... better documentation.
 
 
 
