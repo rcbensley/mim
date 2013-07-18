@@ -68,52 +68,45 @@ echo "Usage:
 
 install()
 {
+  BASEDIR=$(getvar basedir $CONFIGFILE)
+  DATADIR=$(getvar datadir $CONFIGFILE)
+  TMPDIR=$(getvar tmpdir $CONFIGFILE)
   if [[ -d $DATADIR ]]
     then
       echo "$DATADIR already exists, aborting"
       exit 1
     else
-      mkdir -p $DATADIR/tmp
-      CONFIGFILE=$CONFDIR/$SERVERNAME.cnf
-      BASEDIR=$(getvar basedir $CONFIGFILE)
-      cd $BASEDIR
-      ./scripts/mysql_install_db --defaults-file=$CONFIGFILE 2>&1 | egrep -i 'mysqladmin|secure'
-      exit 0
+      mkdir -p $TMPDIR
+      if [[ -d $TMPDIR ]]
+      then
+        cd $BASEDIR
+        ./scripts/mysql_install_db --defaults-file=$CONFIGFILE 2>&1 | egrep -i 'mysqladmin|secure'
+        exit 0
+      else
+        echo "Creating $TMPDIR failed, aborting"
+        exit 1
+      fi
   fi
 }
 
 start()
 {
-  if [[ -z $SERVERNAME ]]
-  then
-    echo "Missing parameter"
-    showhelp
-    exit 0
-  else
-    echo '' > /tmp/$SERVERNAME.log
-    SERVERPORT=$(getvar port $CONFIGFILE)
-    BASEDIR=$(getvar basedir $CONFIGFILE)
-    echo "Starting $SERVERNAME on $SERVERPORT"
-    $BASEDIR/bin/mysqld_safe --defaults-file=$CONFIGFILE --ledir=$BASEDIR/bin > /tmp/$SERVERNAME.log 2>&1 &
-    sleep 2
-    cat /tmp/$SERVERNAME.log
-  fi
+  echo '' > /tmp/$SERVERNAME.log
+  SERVERPORT=$(getvar port $CONFIGFILE)
+  BASEDIR=$(getvar basedir $CONFIGFILE)
+  echo "Starting $SERVERNAME on $SERVERPORT"
+  $BASEDIR/bin/mysqld_safe --defaults-file=$CONFIGFILE --ledir=$BASEDIR/bin > /tmp/$SERVERNAME.log 2>&1 &
+  sleep 2
+  cat /tmp/$SERVERNAME.log
 }
 
 stop()
 {
-  if [[ -z $SERVERNAME ]]
-  then
-    echo "Missing parameter"
-    showhelp
-    exit 0
-  else
-    SERVERPORT=$(getvar port $CONFIGFILE)
-    SERVERSOCK=$(getvar socket $CONFIGFILE)
-    BASEDIR=$(getvar basedir $CONFIGFILE)
-    echo "Stopping $SERVERNAME on $SERVERPORT"
-    $BASEDIR/bin/mysqladmin -u root --socket=$SERVERSOCK -P $SERVERPORT shutdown
-  fi
+  SERVERPORT=$(getvar port $CONFIGFILE)
+  SERVERSOCK=$(getvar socket $CONFIGFILE)
+  BASEDIR=$(getvar basedir $CONFIGFILE)
+  echo "Stopping $SERVERNAME on $SERVERPORT"
+  $BASEDIR/bin/mysqladmin -u root --socket=$SERVERSOCK -P $SERVERPORT shutdown
 }
 
 status()
@@ -214,6 +207,7 @@ then
 else
   BASEDIR=$(getvar basedir $CONFIGFILE)
   printf "export PATH=${BASEDIR}/bin:\$PATH\n"
+  printf "export LD_LIBRARY_PATH=${BASEDIR}/lib:\$LD_LIBRARY_PATH\n"
 fi
 }
 
@@ -321,50 +315,63 @@ else
   fi
 fi
 
-if [[ $1 == "build" ]]
-  then
-    if [[ $# -ne 4 ]]
-      then
-        echo "Wrong Parameters"
-        showhelp
-        exit 1
-      else
-        SERVERNAME=$2
-        PORT=$3
-        ID=$4
-        DATADIR=$DBHOME/data/$SERVERNAME
-        TMPDIR=$DATADIR/tmp
-    fi
-fi
-
-if [[ $1 == "install" ]]
-then
-  if [[ $# -ne 2 ]]
-    then
-      echo "Wrong Paramters"
-      showhelp
-      exit 0
-    else
-      CONFIGFILE=$CONFDIR/$2.cnf
-      SERVERNAME=$2
-      DATADIR=$DBHOME/data/$SERVERNAME
-      TMPDIR=$DATADIR/tmp
-  fi
-fi
-
 if [[ -z $1 ]]
 then
+  echo "No command specified"
   showhelp
   exit 0
-else
-  if [[ "`type -t $1`" = 'function'  ]]
-    then
-      CONFIGFILE=$CONFDIR/$2.cnf
-      SERVERNAME=$2
-      $1
-    else
-      echo "Invalid command"
-      showhelp
-      exit 0
-  fi
 fi
+
+if [[ $1 == "status" ]]
+then
+  status
+  exit 0
+fi
+
+if [[ -z $2 ]]
+then
+  echo "Servername not specified"
+  exit 0
+else
+  CONFIGFILE=$CONFDIR/$2.cnf
+  SERVERNAME=$2
+fi
+
+if [[ $1 == "build" && $# == 4 ]]
+then
+  PORT=$3
+  ID=$4
+  DATADIR=$DBHOME/data/$SERVERNAME
+  TMPDIR=$DATADIR/tmp
+  build
+fi
+
+if [[ $1 == "install" && $# == 2 ]]
+then
+  install
+fi
+
+if [[ $1 == "start" && $# == 2 ]]
+then
+  start
+  exit 0
+fi
+
+if [[ $1 == "stop" && $# == 2 ]]
+then
+  stop
+  exit 0
+fi
+
+if [[ $1 == "client" && $# == 2 ]]
+then
+  selectclient
+fi
+
+if [[ $1 == "use" && $# == 2 ]]
+then
+  use
+fi
+
+echo "Invalid command: $@"
+exit 0
