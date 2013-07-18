@@ -39,11 +39,11 @@ getvar()
   grep -w $1 $2 | grep -v mysqld | cut -d '=' -f 2 | tail -n 1 | tr -d ' '
 }
 
-help()
+showhelp()
 {
 echo "Usage:
 
-  help,     this message
+  showhelp,     this message
 
   firstrun, setup directories and default template.
 
@@ -59,6 +59,9 @@ echo "Usage:
   start/stop
 
   aliases,  creates aliases of all your instances to STDOUT
+
+  selectclient, Print a valid PATH extenstion to STDOUT
+                i.e. my selectclient foo
 "
   exit 0
 }
@@ -81,24 +84,36 @@ install()
 
 start()
 {
-  echo '' > /tmp/$SERVERNAME.log
-  SERVERPORT=$(getvar port $CONFIGFILE)
-  BASEDIR=$(getvar basedir $CONFIGFILE)
-  echo "Starting $SERVERNAME on $SERVERPORT"
-  $BASEDIR/bin/mysqld_safe --defaults-file=$CONFIGFILE --ledir=$BASEDIR/bin > /tmp/$SERVERNAME.log 2>&1 &
-  sleep 2
-  cat /tmp/$SERVERNAME.log
-  exit 0
+  if [[ -z $SERVERNAME ]]
+  then
+    echo "Missing parameter"
+    showhelp
+    exit 0
+  else
+    echo '' > /tmp/$SERVERNAME.log
+    SERVERPORT=$(getvar port $CONFIGFILE)
+    BASEDIR=$(getvar basedir $CONFIGFILE)
+    echo "Starting $SERVERNAME on $SERVERPORT"
+    $BASEDIR/bin/mysqld_safe --defaults-file=$CONFIGFILE --ledir=$BASEDIR/bin > /tmp/$SERVERNAME.log 2>&1 &
+    sleep 2
+    cat /tmp/$SERVERNAME.log
+  fi
 }
 
 stop()
 {
-  SERVERPORT=$(getvar port $CONFIGFILE)
-  SERVERSOCK=$(getvar socket $CONFIGFILE)
-  BASEDIR=$(getvar basedir $CONFIGFILE)
-  echo "Stopping $SERVERNAME on $SERVERPORT"
-  $BASEDIR/bin/mysqladmin -u root --socket=$SERVERSOCK -P $SERVERPORT shutdown
-  exit 0
+  if [[ -z $SERVERNAME ]]
+  then
+    echo "Missing parameter"
+    showhelp
+    exit 0
+  else
+    SERVERPORT=$(getvar port $CONFIGFILE)
+    SERVERSOCK=$(getvar socket $CONFIGFILE)
+    BASEDIR=$(getvar basedir $CONFIGFILE)
+    echo "Stopping $SERVERNAME on $SERVERPORT"
+    $BASEDIR/bin/mysqladmin -u root --socket=$SERVERSOCK -P $SERVERPORT shutdown
+  fi
 }
 
 status()
@@ -151,10 +166,17 @@ for conf in $CONFDIR/*.cnf
 
 use()
 {
-  SERVERPORT=$(getvar port $CONFIGFILE)
-  SERVERSOCK=$(getvar socket $CONFIGFILE)
-  MYSQLBIN=$(getvar basedir $CONFIGFILE)/bin/mysql
-  $MYSQLBIN -P $SERVERPORT -uroot --socket=$SERVERSOCK
+  if [[ -z $SERVERNAME ]]
+  then
+    echo "Missing parameter"
+    showhelp
+    exit 0
+  else
+    SERVERPORT=$(getvar port $CONFIGFILE)
+    SERVERSOCK=$(getvar socket $CONFIGFILE)
+    MYSQLBIN=$(getvar basedir $CONFIGFILE)/bin/mysql
+    $MYSQLBIN -P $SERVERPORT -uroot --socket=$SERVERSOCK
+  fi
 }
 
 selectversion()
@@ -180,6 +202,19 @@ do
   echo "Using $CONFIGTEMPLATE"
   break
 done
+}
+
+selectclient()
+{
+if [[ -z $SERVERNAME ]]
+then
+  echo "Missing parameter"
+  showhelp
+  exit 0
+else
+  BASEDIR=$(getvar basedir $CONFIGFILE)
+  printf "export PATH=${BASEDIR}/bin:\$PATH\n"
+fi
 }
 
 build()
@@ -291,7 +326,7 @@ if [[ $1 == "build" ]]
     if [[ $# -ne 4 ]]
       then
         echo "Wrong Parameters"
-        help
+        showhelp
         exit 1
       else
         SERVERNAME=$2
@@ -307,7 +342,7 @@ then
   if [[ $# -ne 2 ]]
     then
       echo "Wrong Paramters"
-      help
+      showhelp
       exit 0
     else
       CONFIGFILE=$CONFDIR/$2.cnf
@@ -319,7 +354,7 @@ fi
 
 if [[ -z $1 ]]
 then
-  help
+  showhelp
   exit 0
 else
   if [[ "`type -t $1`" = 'function'  ]]
@@ -328,8 +363,8 @@ else
       SERVERNAME=$2
       $1
     else
-      echo "That is not a valid command"
-      help
+      echo "Invalid command"
+      showhelp
       exit 0
   fi
 fi
