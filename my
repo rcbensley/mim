@@ -4,10 +4,6 @@
 #   DBHOME, the directory where configs, datadir, and templates will reside
 #   DBINSTDIR, the directory where all your mysql/mariadb .tar.gz files are
 #   DBSHELLNAME, optional prompt name
-#
-# TODO:
-#   - Select client path
-#   - Select lib path
 
 
 firstrun()
@@ -41,27 +37,36 @@ getvar()
 
 showhelp()
 {
-echo "Usage:
+printf "
+help, this message
+tutorial, some examples
+setup, run through first run setup
+status, show installed server status\n
+build\t[server name]\t[port]\t[server-id]
+install\t[server name]
+start\t[server name]
+stop\t[server name]
+client\t[server name]
+"
+  exit 0
+}
 
-  showhelp,     this message
+showtutorial()
+{
+printf "
+  Sorry this will be improved upon later but here are some basic steps:
 
-  firstrun, setup directories and default template.
-
-  build,    build a MySQL server config:
-            i.e. my build foo 3306 100
-
-  install,  install instance from built config
-            i.e. my install foo
-
-  status,   MySQL/MariaDB instance status
-            my status, for all instances
-
-  start/stop
-
-  aliases,  creates aliases of all your instances to STDOUT
-
-  selectclient, Print a valid PATH extenstion to STDOUT
-                i.e. my selectclient foo
+  1) export DBINSTDIR, DBHOME
+  2) run 'my' for the first time to create directories in DBHOME
+  3) put template config files in $DBHOME/templates
+  4) put MariaDB/MySQL install files (tar.gz files) in DBINSTDIR
+  5) build an instance: my build myFirstInstance 3306 100
+  6 install the instance: my install myFirstInstance
+  7) start the instance: my start myFirstInstance
+  8) see the instance status: my status
+  9) access the instance: my use myFirstInstance
+  10) optionally create aliases to login with: my aliases
+  11) again optionally create PATH and profile options for this instance: my client myFirstInstance
 "
   exit 0
 }
@@ -176,11 +181,11 @@ selectversion()
 {
 select MYVER in $DBINSTDIR/*.tar.gz;
 do
-  BASEDIR=$DBINSTDIR/$(basename $MYVER .tar.gz)
+  BASEDIR=${DBINSTDIR}/$(basename $MYVER .tar.gz)
   if [[ ! -d $BASEDIR ]]
   then
     echo "$BASEDIR not found, extracting $MYVER"
-    tar -xf $MYVER -C $DBINSTDIR
+    tar -xf $MYVER -C ${DBINSTDIR}
   fi
   echo "Using $MYVER"
   break
@@ -328,27 +333,30 @@ then
   exit 0
 fi
 
+if [[ $1 == "setup" ]]
+then
+  firstrun
+  exit 0
+fi
+
+if [[ $1 == "tutorial" ]]
+then
+  showtutorial
+  exit 0
+fi
+
 if [[ -z $2 ]]
 then
   echo "Servername not specified"
-  exit 0
 else
   CONFIGFILE=$CONFDIR/$2.cnf
   SERVERNAME=$2
 fi
 
-if [[ $1 == "build" && $# == 4 ]]
-then
-  PORT=$3
-  ID=$4
-  DATADIR=$DBHOME/data/$SERVERNAME
-  TMPDIR=$DATADIR/tmp
-  build
-fi
-
 if [[ $1 == "install" && $# == 2 ]]
 then
   install
+  exit 0
 fi
 
 if [[ $1 == "start" && $# == 2 ]]
@@ -366,11 +374,27 @@ fi
 if [[ $1 == "client" && $# == 2 ]]
 then
   selectclient
+  exit 0
 fi
 
 if [[ $1 == "use" && $# == 2 ]]
 then
   use
+  exit 0
+fi
+
+if [[ $1 == "build" && $# == 4 ]]
+then
+  PORT=$3
+  ID=$4
+  DATADIR=$DBHOME/data/$SERVERNAME
+  TMPDIR=$DATADIR/tmp
+  build
+  exit 0
+else
+  echo "Incorrect Parameters"
+  echo "my build [server name] [port] [server-id] [config template]"
+  exit 0
 fi
 
 echo "Invalid command: $@"
