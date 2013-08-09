@@ -3,7 +3,7 @@
 # Set the following in your bash profile
 #   DBHOME, the directory where configs, datadir, and templates will reside
 #   DBINSTDIR, the directory where all your mysql/mariadb .tar.gz files are
-#   DBSHELLNAME, optional prompt name
+#   DBSHELLNAME, optional prompt name default is 'mariadb'
 
 
 firstrun()
@@ -27,7 +27,7 @@ firstrun()
             mkdir $DBHOME/$dir
           fi
       done
-    fi
+  fi
 }
 
 getvar()
@@ -38,17 +38,17 @@ getvar()
 showhelp()
 {
 printf "
-help, this message
-tutorial, some examples
-setup, run through first run setup
-status, show installed server status\n
+help\tthis message
+tutorial\tsome examples
+setup\trun through first run setup
+status\tshow installed server status\n
 build\t[server name]\t[port]\t[server-id]
 install\t[server name]
 start\t[server name]
 stop\t[server name]
 client\t[server name]
 "
-  exit 0
+exit 0
 }
 
 showtutorial()
@@ -143,7 +143,7 @@ status()
         else
           echo -e "$SERVERNAME\tOFFLINE"
       fi
-    done
+  done
 }
 
 aliases()
@@ -250,8 +250,6 @@ else
     then
         echo -e "
 [mysqld]
-!include $TEMPLATEDIR/$CONFIGTEMPLATE.cnf
-
 user                = $USER
 server-id           = $ID
 basedir             = $BASEDIR
@@ -264,6 +262,8 @@ log-bin             = $DATADIR/mysql-log-bin
 log-bin-index       = $DATADIR/mysql-log-bin.index
 log_error           = $DATADIR/error.log
 slow_query_log_file = $DATADIR/slow.log
+
+!include $TEMPLATEDIR/$CONFIGTEMPLATE.cnf
 " > $CONFDIR/$SERVERNAME.cnf
       exit 0
     else
@@ -275,10 +275,8 @@ fi
 }
 
 
-# MAIN with lazy evaluation
-# Add check for mysql lib in $LD_LIBRARY_PATH and maybe DYLD_LIBRARY_PATH on mac.
-
-declare -a req_dir=(verions configs templates data)
+### MAIN ###
+declare -a req_dir=(configs templates data)
 ERRORCOUNTER=0
 
 if [[ -z $DBHOME ]]
@@ -353,47 +351,48 @@ else
   SERVERNAME=$2
 fi
 
-if [[ $1 == "install" && $# == 2 ]]
+if [[ $1 == "install" && $# -eq 2 ]]
 then
   install
   exit 0
 fi
 
-if [[ $1 == "start" && $# == 2 ]]
+if [[ $1 == "start" && $# -eq 2 ]]
 then
   start
   exit 0
 fi
 
-if [[ $1 == "stop" && $# == 2 ]]
+if [[ $1 == "stop" && $# -eq 2 ]]
 then
   stop
   exit 0
 fi
 
-if [[ $1 == "client" && $# == 2 ]]
+if [[ $1 == "client" && $# -eq 2 ]]
 then
   selectclient
   exit 0
 fi
 
-if [[ $1 == "use" && $# == 2 ]]
+if [[ $1 == "use" && $# -eq 2 ]]
 then
   use
   exit 0
 fi
 
-if [[ $1 == "build" && $# == 4 ]]
+if [[ $1 == "build" && $# -eq 5 ]]
 then
   PORT=$3
   ID=$4
+  CONFIGTEMPLATE=$5
   DATADIR=$DBHOME/data/$SERVERNAME
   TMPDIR=$DATADIR/tmp
   build
   exit 0
 else
   echo "Incorrect Parameters"
-  echo "my build [server name] [port] [server-id] [config template]"
+  showhelp
   exit 0
 fi
 

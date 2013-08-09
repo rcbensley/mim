@@ -14,20 +14,6 @@ events
 single-transaction
 
 [mysqld]
-# Environment
-user                           = %USER%
-server-id                      = %ID%
-basedir                        = %BASEDIR%
-tmpdir                         = %TMPDIR%
-port                           = %PORT%
-datadir                        = %DATADIR%
-socket                         = %DATADIR%/mysql.sock
-pid_file                       = %DATADIR%/mysql.pid
-log-bin                        = %DATADIR%/mysql-log-bin
-log-bin-index                  = %DATADIR%/mysql-log-bin.index
-log_error                      = %DATADIR%/error.log
-slow_query_log_file            = %DATADIR%/slow.log
-
 # UTF8
 character-set-server = utf8
 init-connect = 'SET NAMES utf8'
