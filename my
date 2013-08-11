@@ -37,12 +37,11 @@ getvar()
 
 showhelp()
 {
-printf "
-help\tthis message
-tutorial\tsome examples
-setup\trun through first run setup
-status\tshow installed server status\n
-build\t[server name]\t[port]\t[server-id]
+printf "help, this message
+tutorial, tsome examples
+setup, run through first run setup
+status, show installed server status\n
+build\t[server name] [port]
 install\t[server name]
 start\t[server name]
 stop\t[server name]
@@ -54,13 +53,13 @@ exit 0
 showtutorial()
 {
 printf "
-  Sorry this will be improved upon later but here are some basic steps:
+  This will be improved upon later but here are some basic steps:
 
   1) export DBINSTDIR, DBHOME
   2) run 'my' for the first time to create directories in DBHOME
   3) put template config files in $DBHOME/templates
   4) put MariaDB/MySQL install files (tar.gz files) in DBINSTDIR
-  5) build an instance: my build myFirstInstance 3306 100
+  5) build an instance: my build myFirstInstance 3306
   6 install the instance: my install myFirstInstance
   7) start the instance: my start myFirstInstance
   8) see the instance status: my status
@@ -116,7 +115,7 @@ stop()
 
 status()
 {
-  if [[  $(ls $CONFDIR | wc -l | tr -d ' ') < 1 ]]
+  if [[  $(ls -1 $CONFDIR | wc -l | tr -d ' ') -lt 1 ]]
     then
     echo "No configs found in $CONFDIR, run 'my build' first"
     exit 0
@@ -218,10 +217,16 @@ fi
 
 build()
 {
+if [[ -z $ID ]]
+then
+  echo "server-id was not assigned, using date. Is the date command in your PATH?"
+  exit 0
+fi
+
 if [[ ! -d $DBINSTDIR ]]
 then
   echo "$DBINSTDIR does not exist, aborting"
-  exit 1
+  exit 0
 else
   selecttemplate
   selectversion
@@ -233,22 +238,22 @@ then
   exit 1
 
 else
-  if [[ -e $CONFDIR/$SERVERNAME.cnf ]]
+  if [[ -e $CONFDIR/${SERVERNAME}.cnf ]]
     then
-      echo "$SERVERNAME.cnf already exists! Overwrite?"
+      echo "${SERVERNAME}.cnf already exists! Overwrite?"
       select yn in "Yes" "No"; do
         case $yn in
           Yes ) break;;
           No ) exit 0;;
         esac
       done
-    else touch $CONFDIR/$SERVERNAME.cnf
+    else touch $CONFDIR/${SERVERNAME}.cnf
   fi
 
-  echo "Adding new detaults to $CONFDIR/$SERVERNAME.cnf"
-  if [[ -e $CONFDIR/$SERVERNAME.cnf ]]
+  echo "Adding new detaults to $CONFDIR/${SERVERNAME}.cnf"
+  if [[ -e $CONFDIR/${SERVERNAME}.cnf ]]
     then
-        echo -e "
+echo -e "
 [mysqld]
 user                = $USER
 server-id           = $ID
@@ -263,11 +268,10 @@ log-bin-index       = $DATADIR/mysql-log-bin.index
 log_error           = $DATADIR/error.log
 slow_query_log_file = $DATADIR/slow.log
 
-!include $TEMPLATEDIR/$CONFIGTEMPLATE.cnf
-" > $CONFDIR/$SERVERNAME.cnf
+!include $CONFIGTEMPLATE" > $CONFDIR/${SERVERNAME}.cnf
       exit 0
     else
-      echo "$CONFDIR/$SERVERNAME.cnf not found? Exiting."
+      echo "$CONFDIR/${SERVERNAME}.cnf not found? Exiting."
       exit 1
   fi
 
@@ -337,6 +341,12 @@ then
   exit 0
 fi
 
+if [[ $1 == "help" ]]
+then
+  showhelp
+  exit 0
+fi
+
 if [[ $1 == "tutorial" ]]
 then
   showtutorial
@@ -381,11 +391,10 @@ then
   exit 0
 fi
 
-if [[ $1 == "build" && $# -eq 5 ]]
+if [[ $1 == "build" && $# -eq 3 ]]
 then
   PORT=$3
-  ID=$4
-  CONFIGTEMPLATE=$5
+  ID=$(date '+%s')
   DATADIR=$DBHOME/data/$SERVERNAME
   TMPDIR=$DATADIR/tmp
   build
