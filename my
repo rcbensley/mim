@@ -147,18 +147,24 @@ status()
 
 aliases()
 {
-for conf in $CONFDIR/*.cnf
-  do
-    SERVERNAME=$(basename $conf .cnf)
-    SERVERPORT=$(getvar port $conf)
-    SERVERSOCK=$(getvar socket $conf)
-    if [[ -z $DBSHELLNAME ]]
+  if [[  $(ls -1 $CONFDIR | wc -l | tr -d ' ') -lt 1 ]]
     then
-      DBSHELLNAME="mariadb"
-    fi
-    PROMPTOPT="\"${DBSHELLNAME} [\d] > \""
-    printf "alias ${SERVERNAME}='mysql -P${SERVERPORT} --socket=${SERVERSOCK} --prompt=${PROMPTOPT}'"
-  done
+    echo "No configs found in $CONFDIR, run 'my build' first"
+    exit 0
+  else
+    for conf in $CONFDIR/*.cnf
+    do
+      SERVERNAME=$(basename $conf .cnf)
+      SERVERPORT=$(getvar port $conf)
+      SERVERSOCK=$(getvar socket $conf)
+      if [[ -z $DBSHELLNAME ]]
+      then
+        DBSHELLNAME="mariadb"
+      fi
+      PROMPTOPT="\"${DBSHELLNAME} [\d] > \""
+      printf "alias ${SERVERNAME}='mysql -P${SERVERPORT} --socket=${SERVERSOCK} --prompt=${PROMPTOPT}'"
+    done
+  fi
 }
 
 use()
