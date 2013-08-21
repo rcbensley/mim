@@ -84,7 +84,7 @@ install()
       if [[ -d $TMPDIR ]]
       then
         cd $BASEDIR
-        ./scripts/mysql_install_db --defaults-file=$CONFIGFILE 2>&1 | egrep -i 'mysqladmin|secure'
+        ./scripts/mysql_install_db --defaults-file=$CONFIGFILE 2>&1
         exit 0
       else
         echo "Creating $TMPDIR failed, aborting"
