@@ -444,10 +444,6 @@ then
   DO=$3
   do_all
   exit 0
-else
-  echo "Incorrect Parameters"
-  showhelp
-  exit 0
 fi
 
 if [[ $1 == "build" && $# -eq 3 ]]
