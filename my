@@ -35,12 +35,24 @@ getvar()
   grep -w $1 $2 | grep -v mysqld | cut -d '=' -f 2 | tail -n 1 | tr -d ' '
 }
 
+printstatus()
+{
+    NAME=$1
+    STATUS=$2
+    LOGFILE=$3
+    LOGPOS=$4
+    LOGGTID=$5
+
+    printf "%-16s %-8s %s %s %s\n" $NAME $STATUS $LOGFILE $LOGPOS $LOGGTID
+}
+
 showhelp()
 {
 printf "help, this message
 tutorial, tsome examples
 setup, run through first run setup
-status, show installed server status\n
+status, show installed server status
+aliases, show aliases for all instances\n
 build\t[server name] [port]
 install\t[server name]
 start\t[server name]
@@ -138,9 +150,9 @@ status()
           MASTERIGNORE=$(echo $MASTERSTATUS | awk '{print $4}')
           MASTERLOGGTID=$(echo $MASTERSTATUS | awk '{print $5}')
 
-          echo -e "$SERVERNAME\t$SERVERSTATUS\t$MASTERLOGFILE\t$MASTERLOGPOS\t$MASTERLOGGTID"
+          printstatus $SERVERNAME $SERVERSTATUS $MASTERLOGFILE $MASTERLOGPOS $MASTERLOGGTID
         else
-          echo -e "$SERVERNAME\tOFFLINE"
+          printstatus $SERVERNAME "OFFLINE"
       fi
   done
 }
@@ -163,6 +175,29 @@ aliases()
       fi
       PROMPTOPT="\"${DBSHELLNAME} [\d] > \""
       printf "alias ${SERVERNAME}='mysql -P${SERVERPORT} --socket=${SERVERSOCK} --prompt=${PROMPTOPT}'"
+    done
+  fi
+}
+
+do_all()
+{
+  if [[  $(ls -1 $CONFDIR | wc -l | tr -d ' ') -lt 1 ]]
+    then
+    echo "No configs found in $CONFDIR, run 'my build' first"
+    exit 0
+  else
+    for conf in $CONFDIR/*.cnf
+    do
+      SERVERNAME=$(basename $conf .cnf)
+      SERVERPORT=$(getvar port $conf)
+      SERVERSOCK=$(getvar socket $conf)
+      BASEDIR=$(getFromConfig basedir $CONFIGFILE)
+      MYSQLALIVE=$($BASEDIR/bin/mysqladmin -h127.0.0.1 -P$PORT ping 2>/dev/null | wc -l)
+
+      if [[ $MYSQLALIVE -ne 0 ]]
+      then
+          $BASEDIR/bin/mysql -P$SERVERPORT -h127.0.0.1 --socket=$SERVERSOCK  -NBe "${DO};"
+      fi
     done
   fi
 }
@@ -400,6 +435,18 @@ fi
 if [[ $1 == "use" && $# -eq 2 ]]
 then
   use
+  exit 0
+fi
+
+if [[ $1 == "all" && $# -eq 2 ]]
+then
+  echo $2
+  DO=$3
+  do_all
+  exit 0
+else
+  echo "Incorrect Parameters"
+  showhelp
   exit 0
 fi
 
