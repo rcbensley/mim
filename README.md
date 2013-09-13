@@ -1,5 +1,5 @@
 MyDBA - simple BASH MySQL/MariaDB instance manager
-========
+==
 
 ## What is this?
 A simple mysql instance manager. Mostly for testing features and running multiple instances of MySQL/MariaDB, even multiple versions.
