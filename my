@@ -191,7 +191,7 @@ do_all()
       SERVERNAME=$(basename $conf .cnf)
       SERVERPORT=$(getvar port $conf)
       SERVERSOCK=$(getvar socket $conf)
-      BASEDIR=$(getFromConfig basedir $CONFIGFILE)
+      BASEDIR=$(getvar basedir $CONFIGFILE)
       MYSQLALIVE=$($BASEDIR/bin/mysqladmin -h127.0.0.1 -P$PORT ping 2>/dev/null | wc -l)
 
       if [[ $MYSQLALIVE -ne 0 ]]
