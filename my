@@ -39,11 +39,12 @@ printstatus()
 {
     NAME=$1
     STATUS=$2
-    LOGFILE=$3
-    LOGPOS=$4
-    LOGGTID=$5
+    VERSION=$3
+    LOGFILE=$4
+    LOGPOS=$5
+    LOGGTID=$6
 
-    printf "%-16s %-8s %s %s %s\n" $NAME $STATUS $LOGFILE $LOGPOS $LOGGTID
+    printf "%-8s %-8s %-20s %s %s %s\n" $NAME $STATUS $VERSION $LOGFILE $LOGPOS $LOGGTID
 }
 
 showhelp()
@@ -142,15 +143,16 @@ status()
       MYSQLBIN=$(getvar basedir $conf)/bin/mysql
       if [[ -e $SERVERPID ]]
         then
-          MASTERSTATUS=$($MYSQLBIN -uroot -P$SERVERPORT --socket=$SERVERSOCK -Be "SHOW MASTER STATUS;" | tail -1)
-          SERVERSTATUS=$($MYSQLBIN -uroot -P$SERVERPORT --socket=$SERVERSOCK -Be "SELECT 'ONLINE';" | tail -1)
+          MASTERSTATUS=$($MYSQLBIN -uroot -P$SERVERPORT --socket=$SERVERSOCK -NBe "SHOW MASTER STATUS;")
+          SERVERSTATUS=$($MYSQLBIN -uroot -P$SERVERPORT --socket=$SERVERSOCK -NBe "SELECT 'ONLINE';")
+          SERVERVERSION=$($MYSQLBIN -uroot -P$SERVERPORT --socket=$SERVERSOCK -NBe "SELECT @@version;")
           MASTERLOGFILE=$(echo $MASTERSTATUS | awk '{print $1}')
           MASTERLOGPOS=$(echo $MASTERSTATUS | awk '{print $2}')
           MASTERDO=$(echo $MASTERSTATUS | awk '{print $3}')
           MASTERIGNORE=$(echo $MASTERSTATUS | awk '{print $4}')
           MASTERLOGGTID=$(echo $MASTERSTATUS | awk '{print $5}')
 
-          printstatus $SERVERNAME $SERVERSTATUS $MASTERLOGFILE $MASTERLOGPOS $MASTERLOGGTID
+          printstatus $SERVERNAME $SERVERSTATUS $SERVERVERSION $MASTERLOGFILE $MASTERLOGPOS $MASTERLOGGTID
         else
           printstatus $SERVERNAME "OFFLINE"
       fi
