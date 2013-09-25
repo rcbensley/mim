@@ -8,36 +8,36 @@
 
 firstrun()
 {
-  if [[ -z $DBHOME ]]
-    then
-      echo "DBHOME has not been declared"
-    else
-      if [[ ! -d $DBHOME ]]
-        then
-          mkdir -p $DBHOME
-      fi
-
-      for dir in ${req_dir[@]}
-      do
-        if [[ -d $DBHOME/$dir ]]
+    if [[ -z $DBHOME ]]
+      then
+        echo "DBHOME has not been declared"
+      else
+        if [[ ! -d $DBHOME ]]
           then
-            echo "$dir already exists in $DBHOME"
-          else
-            echo "creating $DBHOME/$dir"
-            mkdir $DBHOME/$dir
-          fi
-      done
-  fi
+            mkdir -p $DBHOME
+        fi
+
+        for dir in ${req_dir[@]}
+        do
+          if [[ -d $DBHOME/$dir ]]
+            then
+              echo "$dir already exists in $DBHOME"
+            else
+              echo "creating $DBHOME/$dir"
+              mkdir $DBHOME/$dir
+            fi
+        done
+    fi
 }
 
 getvar()
 {
-  grep -w $1 $2 | grep -v mysqld | cut -d '=' -f 2 | tail -n 1 | tr -d ' '
+    grep -w $1 $2 | grep -v mysqld | cut -d '=' -f 2 | tail -n 1 | tr -d ' '
 }
 
 printstatus()
 {
-    printf "%-8s %-8s %-20s %4s %s %s %s\n" $1 $2 $3 $4 $5 $6 $7
+      printf "%-8s %-8s %-20s %4s %s %s %s\n" $1 $2 $3 $4 $5 $6 $7
 }
 
 showhelp()
@@ -59,171 +59,189 @@ exit 0
 showtutorial()
 {
 printf "
-  This will be improved upon later but here are some basic steps:
+    This will be improved upon later but here are some basic steps:
 
-  1) export DBINSTDIR, DBHOME
-  2) run 'my' for the first time to create directories in DBHOME
-  3) put template config files in $DBHOME/templates
-  4) put MariaDB/MySQL install files (tar.gz files) in DBINSTDIR
-  5) build an instance: my build myFirstInstance 3306
-  6 install the instance: my install myFirstInstance
-  7) start the instance: my start myFirstInstance
-  8) see the instance status: my status
-  9) access the instance: my use myFirstInstance
-  10) optionally create aliases to login with: my aliases
-  11) again optionally create PATH and profile options for this instance: my client myFirstInstance
+    1) export DBINSTDIR, DBHOME
+    2) run 'my' for the first time to create directories in DBHOME
+    3) put template config files in $DBHOME/templates
+    4) put MariaDB/MySQL install files (tar.gz files) in DBINSTDIR
+    5) build an instance: my build myFirstInstance 3306
+    6 install the instance: my install myFirstInstance
+    7) start the instance: my start myFirstInstance
+    8) see the instance status: my status
+    9) access the instance: my use myFirstInstance
+    10) optionally create aliases to login with: my aliases
+    11) again optionally create PATH and profile options for this instance: my client myFirstInstance
 "
-  exit 0
+    exit 0
 }
 
 install()
 {
-  BASEDIR=$(getvar basedir $CONFIGFILE)
-  DATADIR=$(getvar datadir $CONFIGFILE)
-  TMPDIR=$(getvar tmpdir $CONFIGFILE)
-  if [[ -d $DATADIR ]]
-    then
-      echo "$DATADIR already exists, aborting"
-      exit 1
-    else
-      mkdir -p $TMPDIR
-      if [[ -d $TMPDIR ]]
+    BASEDIR=$(getvar basedir $CONFIGFILE)
+    DATADIR=$(getvar datadir $CONFIGFILE)
+    TMPDIR=$(getvar tmpdir $CONFIGFILE)
+    if [[ -d $DATADIR ]]
       then
-        cd $BASEDIR
-        ./scripts/mysql_install_db --defaults-file=$CONFIGFILE 2>&1
-        exit 0
-      else
-        echo "Creating $TMPDIR failed, aborting"
+        echo "$DATADIR already exists, aborting"
         exit 1
-      fi
-  fi
+      else
+        mkdir -p $TMPDIR
+        if [[ -d $TMPDIR ]]
+        then
+          cd $BASEDIR
+          ./scripts/mysql_install_db --defaults-file=$CONFIGFILE 2>&1
+          exit 0
+        else
+          echo "Creating $TMPDIR failed, aborting"
+          exit 1
+        fi
+    fi
 }
 
 start()
 {
-  echo '' > /tmp/$SERVERNAME.log
-  SERVERPORT=$(getvar port $CONFIGFILE)
-  BASEDIR=$(getvar basedir $CONFIGFILE)
-  echo "Starting $SERVERNAME on $SERVERPORT"
-  $BASEDIR/bin/mysqld_safe --defaults-file=$CONFIGFILE --ledir=$BASEDIR/bin > /tmp/$SERVERNAME.log 2>&1 &
-  sleep 2
-  cat /tmp/$SERVERNAME.log
+    echo '' > /tmp/$SERVERNAME.log
+    SERVERPORT=$(getvar port $CONFIGFILE)
+    BASEDIR=$(getvar basedir $CONFIGFILE)
+    echo "Starting $SERVERNAME on $SERVERPORT"
+    $BASEDIR/bin/mysqld_safe --defaults-file=$CONFIGFILE --ledir=$BASEDIR/bin > /tmp/$SERVERNAME.log 2>&1 &
+    sleep 2
+    cat /tmp/$SERVERNAME.log
 }
 
 stop()
 {
-  SERVERPORT=$(getvar port $CONFIGFILE)
-  SERVERSOCK=$(getvar socket $CONFIGFILE)
-  BASEDIR=$(getvar basedir $CONFIGFILE)
-  echo "Stopping $SERVERNAME on $SERVERPORT"
-  $BASEDIR/bin/mysqladmin -u root --socket=$SERVERSOCK -P $SERVERPORT shutdown
+    SERVERPORT=$(getvar port $CONFIGFILE)
+    SERVERSOCK=$(getvar socket $CONFIGFILE)
+    BASEDIR=$(getvar basedir $CONFIGFILE)
+    echo "Stopping $SERVERNAME on $SERVERPORT"
+    $BASEDIR/bin/mysqladmin -u root --socket=$SERVERSOCK -P $SERVERPORT shutdown
 }
 
 status()
 {
-  if [[  $(ls -1 $CONFDIR | wc -l | tr -d ' ') -lt 1 ]]
-    then
-    echo "No configs found in $CONFDIR, run 'my build' first"
-    exit 0
-  fi
+    if [[  $(ls -1 $CONFDIR | wc -l | tr -d ' ') -lt 1 ]]
+      then
+      echo "No configs found in $CONFDIR, run 'my build' first"
+      exit 0
+    fi
 
-  for conf in $(ls $CONFDIR/*.cnf)
-    do
-      SERVERNAME=$(basename $conf .cnf)
-      SERVERPORT=$(getvar port $conf)
-      SERVERSOCK=$(getvar socket $conf)
-      SERVERPID=$(getvar pid_file $conf)
-      MYSQLBIN=$(getvar basedir $conf)/bin/mysql
-      if [[ -e $SERVERPID ]]
-        then
-          MASTERSTATUS=$($MYSQLBIN -uroot -P$SERVERPORT --socket=$SERVERSOCK -NBe "SHOW MASTER STATUS;")
-          SERVERSTATUS=$($MYSQLBIN -uroot -P$SERVERPORT --socket=$SERVERSOCK -NBe "SELECT 'ONLINE';")
-          SERVERVERSION=$($MYSQLBIN -uroot -P$SERVERPORT --socket=$SERVERSOCK -NBe "SELECT @@version;")
-          MASTERLOGFILE=$(echo $MASTERSTATUS | awk '{print $1}')
-          MASTERLOGPOS=$(echo $MASTERSTATUS | awk '{print $2}')
-          MASTERDO=$(echo $MASTERSTATUS | awk '{print $3}')
-          MASTERIGNORE=$(echo $MASTERSTATUS | awk '{print $4}')
-          MASTERLOGGTID=$(echo $MASTERSTATUS | awk '{print $5}')
+    for conf in $(ls $CONFDIR/*.cnf)
+      do
+        SERVERNAME=$(basename $conf .cnf)
+        SERVERPORT=$(getvar port $conf)
+        SERVERSOCK=$(getvar socket $conf)
+        SERVERPID=$(getvar pid_file $conf)
+        MYSQLBIN=$(getvar basedir $conf)/bin/mysql
+        if [[ -e $SERVERPID ]]
+          then
+            MASTERSTATUS=$($MYSQLBIN -uroot -P$SERVERPORT --socket=$SERVERSOCK -NBe "SHOW MASTER STATUS;")
+            SERVERSTATUS=$($MYSQLBIN -uroot -P$SERVERPORT --socket=$SERVERSOCK -NBe "SELECT 'ONLINE';")
+            SERVERVERSION=$($MYSQLBIN -uroot -P$SERVERPORT --socket=$SERVERSOCK -NBe "SELECT @@version;")
+            MASTERLOGFILE=$(echo $MASTERSTATUS | awk '{print $1}')
+            MASTERLOGPOS=$(echo $MASTERSTATUS | awk '{print $2}')
+            MASTERDO=$(echo $MASTERSTATUS | awk '{print $3}')
+            MASTERIGNORE=$(echo $MASTERSTATUS | awk '{print $4}')
+            MASTERLOGGTID=$(echo $MASTERSTATUS | awk '{print $5}')
 
-          printstatus $SERVERNAME $SERVERSTATUS $SERVERVERSION $SERVERPORT $MASTERLOGFILE $MASTERLOGPOS $MASTERLOGGTID
-        else
-          printstatus $SERVERNAME "OFFLINE"
-      fi
-  done
+            printstatus $SERVERNAME $SERVERSTATUS $SERVERVERSION $SERVERPORT $MASTERLOGFILE $MASTERLOGPOS $MASTERLOGGTID
+          else
+            printstatus $SERVERNAME "OFFLINE"
+        fi
+    done
 }
 
 aliases()
 {
-  if [[  $(ls -1 $CONFDIR | wc -l | tr -d ' ') -lt 1 ]]
-    then
-    echo "No configs found in $CONFDIR, run 'my build' first"
-    exit 0
-  else
-    for conf in $CONFDIR/*.cnf
-    do
-      SERVERNAME=$(basename $conf .cnf)
-      SERVERPORT=$(getvar port $conf)
-      SERVERSOCK=$(getvar socket $conf)
-      if [[ -z $DBSHELLNAME ]]
+    if [[  $(ls -1 $CONFDIR | wc -l | tr -d ' ') -lt 1 ]]
       then
-        DBSHELLNAME="mariadb"
-      fi
-      PROMPTOPT="\"${DBSHELLNAME} [\d] > \""
-      printf "alias ${SERVERNAME}='mysql -P${SERVERPORT} --socket=${SERVERSOCK} --prompt=${PROMPTOPT}'"
-    done
-  fi
+      echo "No configs found in $CONFDIR, run 'my build' first"
+      exit 0
+    else
+      for conf in $CONFDIR/*.cnf
+      do
+        SERVERNAME=$(basename $conf .cnf)
+        SERVERPORT=$(getvar port $conf)
+        SERVERSOCK=$(getvar socket $conf)
+        if [[ -z $DBSHELLNAME ]]
+        then
+          DBSHELLNAME="mariadb"
+        fi
+        PROMPTOPT="\"${DBSHELLNAME} [\d] > \""
+        printf "alias ${SERVERNAME}='mysql -P${SERVERPORT} --socket=${SERVERSOCK} --prompt=${PROMPTOPT}'"
+      done
+    fi
 }
 
 do_all()
 {
-  if [[  $(ls -1 $CONFDIR | wc -l | tr -d ' ') -lt 1 ]]
-    then
-    echo "No configs found in $CONFDIR, run 'my build' first"
-    exit 0
-  else
-    for conf in $CONFDIR/*.cnf
-    do
-      SERVERNAME=$(basename $conf .cnf)
-      SERVERPORT=$(getvar port $conf)
-      SERVERSOCK=$(getvar socket $conf)
-      BASEDIR=$(getvar basedir $CONFIGFILE)
-      MYSQLALIVE=$($BASEDIR/bin/mysqladmin -h127.0.0.1 -P$PORT ping 2>/dev/null | wc -l)
-
-      if [[ $MYSQLALIVE -ne 0 ]]
+    if [[  $(ls -1 $CONFDIR | wc -l | tr -d ' ') -lt 1 ]]
       then
-          $BASEDIR/bin/mysql -P$SERVERPORT -h127.0.0.1 --socket=$SERVERSOCK  -NBe "${DO};"
-      fi
-    done
-  fi
+      echo "No configs found in $CONFDIR, run 'my build' first"
+      exit 0
+    else
+      for conf in $CONFDIR/*.cnf
+      do
+        SERVERNAME=$(basename $conf .cnf)
+        SERVERPORT=$(getvar port $conf)
+        SERVERSOCK=$(getvar socket $conf)
+        BASEDIR=$(getvar basedir $CONFIGFILE)
+        MYSQLALIVE=$($BASEDIR/bin/mysqladmin -h127.0.0.1 -P$PORT ping 2>/dev/null | wc -l)
+
+        if [[ $MYSQLALIVE -ne 0 ]]
+        then
+            $BASEDIR/bin/mysql -P$SERVERPORT -h127.0.0.1 --socket=$SERVERSOCK  -NBe "${DO};"
+        fi
+      done
+    fi
 }
 
 use()
 {
-  if [[ -z $SERVERNAME ]]
-  then
-    echo "Missing parameter"
-    showhelp
+    if [[ -z $SERVERNAME ]]
+    then
+      echo "Missing parameter"
+      showhelp
+      exit 0
+    else
+      SERVERPORT=$(getvar port $CONFIGFILE)
+      SERVERSOCK=$(getvar socket $CONFIGFILE)
+      MYSQLBIN=$(getvar basedir $CONFIGFILE)/bin/mysql
+      $MYSQLBIN -P $SERVERPORT -uroot --socket=$SERVERSOCK
+    fi
+}
+
+drop()
+{
+    if [[ $DELDATADIR -eq 1 ]]
+    then
+        echo "Removing: $DATADIR"
+        rm -Rf $DATADIR
+    fi
+
+    if [[ $DELCONFIGFILE -eq 1 ]]
+    then
+        echo "Removing: $CONFIGFILE"
+        rm $CONFIGFILE
+    fi
+    
     exit 0
-  else
-    SERVERPORT=$(getvar port $CONFIGFILE)
-    SERVERSOCK=$(getvar socket $CONFIGFILE)
-    MYSQLBIN=$(getvar basedir $CONFIGFILE)/bin/mysql
-    $MYSQLBIN -P $SERVERPORT -uroot --socket=$SERVERSOCK
-  fi
+
 }
 
 selectversion()
 {
 select MYVER in $DBINSTDIR/*.tar.gz;
 do
-  BASEDIR=${DBINSTDIR}/$(basename $MYVER .tar.gz)
-  if [[ ! -d $BASEDIR ]]
-  then
-    echo "$BASEDIR not found, extracting $MYVER"
-    tar -xf $MYVER -C ${DBINSTDIR}
-  fi
-  echo "Using $MYVER"
-  break
+    BASEDIR=${DBINSTDIR}/$(basename $MYVER .tar.gz)
+    if [[ ! -d $BASEDIR ]]
+    then
+      echo "$BASEDIR not found, extracting $MYVER"
+      tar -xf $MYVER -C ${DBINSTDIR}
+    fi
+    echo "Using $MYVER"
+    break
 done
 }
 
@@ -231,9 +249,9 @@ selecttemplate()
 {
 select MYTEMPLATE in $TEMPLATEDIR/*;
 do
-  export CONFIGTEMPLATE=$MYTEMPLATE
-  echo "Using $CONFIGTEMPLATE"
-  break
+    export CONFIGTEMPLATE=$MYTEMPLATE
+    echo "Using $CONFIGTEMPLATE"
+    break
 done
 }
 
@@ -241,13 +259,13 @@ selectclient()
 {
 if [[ -z $SERVERNAME ]]
 then
-  echo "Missing parameter"
-  showhelp
-  exit 0
+    echo "Missing parameter"
+    showhelp
+    exit 0
 else
-  BASEDIR=$(getvar basedir $CONFIGFILE)
-  printf "export PATH=${BASEDIR}/bin:\$PATH\n"
-  printf "export LD_LIBRARY_PATH=${BASEDIR}/lib:\$LD_LIBRARY_PATH\n"
+    BASEDIR=$(getvar basedir $CONFIGFILE)
+    printf "export PATH=${BASEDIR}/bin:\$PATH\n"
+    printf "export LD_LIBRARY_PATH=${BASEDIR}/lib:\$LD_LIBRARY_PATH\n"
 fi
 }
 
@@ -255,40 +273,40 @@ build()
 {
 if [[ -z $ID ]]
 then
-  echo "server-id was not assigned, using date. Is the date command in your PATH?"
-  exit 0
+    echo "server-id was not assigned, using date. Is the date command in your PATH?"
+    exit 0
 fi
 
 if [[ ! -d $DBINSTDIR ]]
 then
-  echo "$DBINSTDIR does not exist, aborting"
-  exit 0
+    echo "$DBINSTDIR does not exist, aborting"
+    exit 0
 else
-  selecttemplate
-  selectversion
+    selecttemplate
+    selectversion
 fi
 
 if [[ -z $BASEDIR && -z $CONFIGTEMPLATE ]]
 then
-  echo "Need a Version and Config Template, aborting"
-  exit 1
+    echo "Need a Version and Config Template, aborting"
+    exit 1
 
 else
-  if [[ -e $CONFDIR/${SERVERNAME}.cnf ]]
-    then
-      echo "${SERVERNAME}.cnf already exists! Overwrite?"
-      select yn in "Yes" "No"; do
-        case $yn in
-          Yes ) break;;
-          No ) exit 0;;
-        esac
-      done
-    else touch $CONFDIR/${SERVERNAME}.cnf
-  fi
+    if [[ -e $CONFDIR/${SERVERNAME}.cnf ]]
+      then
+        echo "${SERVERNAME}.cnf already exists! Overwrite?"
+        select yn in "Yes" "No"; do
+          case $yn in
+            Yes ) break;;
+            No ) exit 0;;
+          esac
+        done
+      else touch $CONFDIR/${SERVERNAME}.cnf
+    fi
 
-  echo "Adding new detaults to $CONFDIR/${SERVERNAME}.cnf"
-  if [[ -e $CONFDIR/${SERVERNAME}.cnf ]]
-    then
+    echo "Adding new detaults to $CONFDIR/${SERVERNAME}.cnf"
+    if [[ -e $CONFDIR/${SERVERNAME}.cnf ]]
+      then
 echo -e "
 [mysqld]
 user                = $USER
@@ -305,11 +323,11 @@ log_error           = $DATADIR/error.log
 slow_query_log_file = $DATADIR/slow.log
 
 !include $CONFIGTEMPLATE" > $CONFDIR/${SERVERNAME}.cnf
-      exit 0
-    else
-      echo "$CONFDIR/${SERVERNAME}.cnf not found? Exiting."
-      exit 1
-  fi
+        exit 0
+      else
+        echo "$CONFDIR/${SERVERNAME}.cnf not found? Exiting."
+        exit 1
+    fi
 
 fi
 }
@@ -321,138 +339,169 @@ ERRORCOUNTER=0
 
 if [[ -z $DBHOME ]]
 then
-  echo "DBHOME not defined"
-  let ERRORCOUNTER+=1
+    echo "DBHOME not defined"
+    let ERRORCOUNTER+=1
 fi
 
 if [[ -z $DBINSTDIR ]]
 then
-  echo "DBHOME not defined"
-  let ERRORCOUNTER+=1
+    echo "DBHOME not defined"
+    let ERRORCOUNTER+=1
 elif [[ ! -d $DBINSTDIR ]]
 then
-  echo "DBINSTDIR defined, but directory does not exist"
-  let ERRORCOUNTER+=1
+    echo "DBINSTDIR defined, but directory does not exist"
+    let ERRORCOUNTER+=1
 fi
 
 if [[ $ERRORCOUNTER -ne 0 ]]
 then
-  echo "Errors encountred, aborting"
-  exit 0
+    echo "Errors encountred, aborting"
+    exit 0
 else
-  CONFDIR=$DBHOME/configs
-  TEMPLATEDIR=$DBHOME/templates
-  if [[ ! -d $DBHOME ]]
-    then
-      echo "$DBHOME does not exist, run setup?"
-      select yn in "Yes" "No"; do
-        case $yn in
-          Yes ) firstrun
-                break
-                ;;
-          No )  echo "please create $DBHOME manually"
-                exit 1
-                ;;
-        esac
-      done
-  fi
+    CONFDIR=$DBHOME/configs
+    TEMPLATEDIR=$DBHOME/templates
+    if [[ ! -d $DBHOME ]]
+      then
+        echo "$DBHOME does not exist, run setup?"
+        select yn in "Yes" "No"; do
+          case $yn in
+            Yes ) firstrun
+                  break
+                  ;;
+            No )  echo "please create $DBHOME manually"
+                  exit 1
+                  ;;
+          esac
+        done
+    fi
 fi
 
 if [[ -z $1 ]]
 then
-  echo "No command specified"
-  showhelp
-  exit 0
+    echo "No command specified"
+    showhelp
+    exit 0
 fi
 
 if [[ $1 == "status" ]]
 then
-  status
-  exit 0
+    status
+    exit 0
 fi
 
 if [[ $1 == "setup" ]]
 then
-  firstrun
-  exit 0
+    firstrun
+    exit 0
 fi
 
 if [[ $1 == "aliases" ]]
 then
-  aliases
-  exit 0
+    aliases
+    exit 0
 fi
 
 if [[ $1 == "help" ]]
 then
-  showhelp
-  exit 0
+    showhelp
+    exit 0
 fi
 
 if [[ $1 == "tutorial" ]]
 then
-  showtutorial
-  exit 0
+    showtutorial
+    exit 0
 fi
 
 if [[ -z $2 ]]
 then
-  echo "Servername not specified"
+    echo "Servername not specified"
 else
-  CONFIGFILE=$CONFDIR/$2.cnf
-  SERVERNAME=$2
+    CONFIGFILE=$CONFDIR/$2.cnf
+    SERVERNAME=$2
 fi
 
 if [[ $1 == "install" && $# -eq 2 ]]
 then
-  install
-  exit 0
+    install
+    exit 0
 fi
 
 if [[ $1 == "start" && $# -eq 2 ]]
 then
-  start
-  exit 0
+    start
+    exit 0
 fi
 
 if [[ $1 == "stop" && $# -eq 2 ]]
 then
-  stop
-  exit 0
+    stop
+    exit 0
 fi
 
 if [[ $1 == "client" && $# -eq 2 ]]
 then
-  selectclient
-  exit 0
+    selectclient
+    exit 0
 fi
 
 if [[ $1 == "use" && $# -eq 2 ]]
 then
-  use
-  exit 0
+    use
+    exit 0
 fi
 
 if [[ $1 == "all" && $# -eq 2 ]]
 then
-  echo $2
-  DO=$3
-  do_all
-  exit 0
+    echo $2
+    DO=$3
+    do_all
+    exit 0
+fi
+
+if [[ $1 == "drop" && $# -eq 2 ]]
+then
+    DATADIR=$DBHOME/data/$SERVERNAME
+    CONFIGFILE=$CONFDIR/$2.cnf
+    DELDATADIR=0
+    DELCONFIGFILE=0
+    if [[ -d $DATADIR ]]
+    then
+        DELDATADIR=1
+        echo "$DATADIR found"
+    else
+        echo "No datadir found in $DATADIR"
+    fi
+
+    if [[ -e $CONFIGFILE ]]
+    then
+        DELCONFIGFILE=1
+        echo "$CONFIGFILE found"
+    else
+        echo "No config found in $CONFIGFILE"
+    fi
+
+    if [[ $DELDATADIR -eq 1 || $DELCONFIGFILE -eq 1 ]]
+    then
+        drop
+    else
+        echo "Nothing to do? Exiting ..."
+        exit 0
+    fi
 fi
 
 if [[ $1 == "build" && $# -eq 3 ]]
 then
-  PORT=$3
-  ID=$(date '+%s')
-  DATADIR=$DBHOME/data/$SERVERNAME
-  TMPDIR=$DATADIR/tmp
-  build
-  exit 0
+    PORT=$3
+    ID=$(date '+%s')
+    DATADIR=$DBHOME/data/$SERVERNAME
+    TMPDIR=$DATADIR/tmp
+    build
+    exit 0
 else
-  echo "Incorrect Parameters"
-  showhelp
-  exit 0
+    echo "Incorrect Parameters"
+    showhelp
+    exit 0
 fi
 
 echo "Invalid command: $@"
