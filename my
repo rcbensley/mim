@@ -49,6 +49,7 @@ status, show installed server status
 aliases, show aliases for all instances\n
 build\t[server name] [port]
 install\t[server name]
+drop\t[server name]
 start\t[server name]
 stop\t[server name]
 client\t[server name]
