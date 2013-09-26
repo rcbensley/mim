@@ -47,12 +47,13 @@ tutorial, tsome examples
 setup, run through first run setup
 status, show installed server status
 aliases, show aliases for all instances\n
-build\t[server name] [port]
-install\t[server name]
-drop\t[server name]
+build\t[server name] [port] create a server config
+install\t[server name] install a server from config
+drop\t[server name] drops instance datadir AND config!
 start\t[server name]
 stop\t[server name]
-client\t[server name]
+client\t[server name] produce path variables for your shell
+all\t'[SQL Command]' send SQL to all running instances, return to STDOUT
 "
 exit 0
 }
@@ -117,7 +118,7 @@ stop()
     SERVERSOCK=$(getvar socket $CONFIGFILE)
     BASEDIR=$(getvar basedir $CONFIGFILE)
     echo "Stopping $SERVERNAME on $SERVERPORT"
-    $BASEDIR/bin/mysqladmin -u root --socket=$SERVERSOCK -P $SERVERPORT shutdown
+    $BASEDIR/bin/mysqladmin -uroot --socket=$SERVERSOCK -P $SERVERPORT shutdown
 }
 
 status()
@@ -182,17 +183,20 @@ do_all()
       echo "No configs found in $CONFDIR, run 'my build' first"
       exit 0
     else
+      declare -a mybins  
+      MYBINS=()
       for conf in $CONFDIR/*.cnf
       do
         SERVERNAME=$(basename $conf .cnf)
         SERVERPORT=$(getvar port $conf)
         SERVERSOCK=$(getvar socket $conf)
-        BASEDIR=$(getvar basedir $CONFIGFILE)
-        MYSQLALIVE=$($BASEDIR/bin/mysqladmin -h127.0.0.1 -P$PORT ping 2>/dev/null | wc -l)
+        BASEDIR=$(getvar basedir $conf)
+        MYSQLALIVE=$($BASEDIR/bin/mysqladmin -uroot --socket=$SERVERSOCK ping 2>/dev/null | wc -l)
 
         if [[ $MYSQLALIVE -ne 0 ]]
         then
-            $BASEDIR/bin/mysql -P$SERVERPORT -h127.0.0.1 --socket=$SERVERSOCK  -NBe "${DO};"
+            printf "${SERVERNAME}\n--\n"
+            $BASEDIR/bin/mysql -uroot --socket=$SERVERSOCK -NBe "${DO};"
         fi
       done
     fi
@@ -454,8 +458,7 @@ fi
 
 if [[ $1 == "all" && $# -eq 2 ]]
 then
-    echo $2
-    DO=$3
+    DO=$2
     do_all
     exit 0
 fi
