@@ -184,7 +184,6 @@ do_all()
       exit 0
     else
       declare -a mybins  
-      MYBINS=()
       for conf in $CONFDIR/*.cnf
       do
         SERVERNAME=$(basename $conf .cnf)
