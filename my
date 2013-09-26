@@ -37,7 +37,7 @@ getvar()
 
 printstatus()
 {
-      printf "%-8s %-8s %-20s %4s %s %s %s\n" $1 $2 $3 $4 $5 $6 $7
+      printf "%-8s %4s %-8s %-20s %s %s %s\n" $1 $2 $3 $4 $5 $6 $7
 }
 
 showhelp()
@@ -146,9 +146,9 @@ status()
             MASTERIGNORE=$(echo $MASTERSTATUS | awk '{print $4}')
             MASTERLOGGTID=$(echo $MASTERSTATUS | awk '{print $5}')
 
-            printstatus $SERVERNAME $SERVERSTATUS $SERVERVERSION $SERVERPORT $MASTERLOGFILE $MASTERLOGPOS $MASTERLOGGTID
+            printstatus $SERVERNAME $SERVERPORT $SERVERSTATUS $SERVERVERSION $MASTERLOGFILE $MASTERLOGPOS $MASTERLOGGTID
           else
-            printstatus $SERVERNAME "OFFLINE"
+            printstatus $SERVERNAME $SERVERPORT "OFFLINE"
         fi
     done
 }

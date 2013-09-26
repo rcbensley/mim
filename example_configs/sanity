@@ -31,10 +31,13 @@ max_connect_errors = 1000000
 max_connections = 1000
 
 # ACID
-sql_mode = traditional
+sql_mode = NO_ENGINE_SUBSTITUTION,STRICT_TRANS_TABLES
 innodb_flush_log_at_trx_commit = 1
 innodb_flush_method = O_DIRECT
 innodb_file_per_table= 1
 innodb_doublewrite = 1
 innodb_strict_mode = 1
 sync_binlog = 1
+
+key_buffer_size = 8M
+innodb_buffer_pool_size=8M
