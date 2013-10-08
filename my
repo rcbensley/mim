@@ -269,7 +269,7 @@ then
 else
     BASEDIR=$(getvar basedir $CONFIGFILE)
     printf "export PATH=${BASEDIR}/bin:\$PATH\n"
-    printf "export LD_LIBRARY_PATH=${BASEDIR}/lib:\$LD_LIBRARY_PATH\n"
+    printf "export LD_LIBRARY_PATH=${BASEDIR}/lib\n"
 fi
 }
 
