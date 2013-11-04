@@ -1,0 +1,34 @@
+# Totally non-durable!
+
+
+[client]
+show-warnings
+
+[mysql]
+show-warnings
+
+[mysqldump]
+quick
+events
+comments
+routines
+triggers
+flush-privileges
+single-transaction
+
+[mysqld]
+skip-slave-start
+max_connect_errors = 1000000
+max_connections = 1000
+#sql_mode = Nope!
+innodb_flush_log_at_trx_commit = 0
+innodb_file_per_table= 1
+innodb_doublewrite = 0
+innodb_strict_mode = 0
+innodb_support_xa = 0
+sync_binlog = 0
+sync_frm = 0
+innodb_checksums = 0
+
+key_buffer_size = 8M
+innodb_buffer_pool_size=8M
