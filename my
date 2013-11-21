@@ -52,7 +52,8 @@ install\t[server name] install a server from config
 drop\t[server name] drops instance datadir AND config!
 start\t[server name]
 stop\t[server name]
-client\t[server name] produce path variables for your shell
+client\t[server name] produce path variables for your shell to STDOUT
+aliases\tproduce a list of aliases for all available instances to STDOUT
 all\t'[SQL Command]' send SQL to all running instances, return to STDOUT
 "
 exit 0
@@ -171,7 +172,7 @@ aliases()
           DBSHELLNAME="mariadb"
         fi
         PROMPTOPT="\"${DBSHELLNAME} [\d] > \""
-        printf "alias ${SERVERNAME}='mysql -P${SERVERPORT} --socket=${SERVERSOCK} --prompt=${PROMPTOPT}'"
+        printf "alias ${SERVERNAME}='mysql -P${SERVERPORT} --socket=${SERVERSOCK} --prompt=${PROMPTOPT}'\n"
       done
     fi
 }
