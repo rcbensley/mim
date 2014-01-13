@@ -1,6 +1,3 @@
-# Totally non-durable!
-
-
 [client]
 show-warnings
 
@@ -13,14 +10,14 @@ events
 comments
 routines
 triggers
-flush-privileges
 single-transaction
 
+# Totally unsafe, but much faster, much less IOPS.
 [mysqld]
 skip-slave-start
 max_connect_errors = 1000000
 max_connections = 1000
-#sql_mode = Nope!
+sql_mode = ''
 innodb_flush_log_at_trx_commit = 0
 innodb_file_per_table= 1
 innodb_doublewrite = 0
@@ -29,6 +26,5 @@ innodb_support_xa = 0
 sync_binlog = 0
 sync_frm = 0
 innodb_checksums = 0
-
 key_buffer_size = 8M
 innodb_buffer_pool_size=8M

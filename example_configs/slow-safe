@@ -15,6 +15,7 @@ triggers
 flush-privileges
 single-transaction
 
+# Safe/ACID config. Slower, more IOPS.
 [mysqld]
 character-set-server = utf8
 init-connect = 'SET NAMES utf8'
