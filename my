@@ -1,30 +1,30 @@
 #!/bin/bash
 
 # Set the following in your bash profile
-#   DBHOME, the directory where configs, datadir, and templates will reside
-#   DBINSTDIR, the directory where all your mysql/mariadb .tar.gz files are
+#   MIMHOME, the directory where configs, datadir, and templates will reside
+#   MIMBINARIES, the directory where all your mysql/mariadb .tar.gz files are
 #   DBSHELLNAME, optional prompt name default is 'mariadb'
 
 
 firstrun()
 {
-    if [[ -z $DBHOME ]]
+    if [[ -z $MIMHOME ]]
       then
-        echo "DBHOME has not been declared"
+        echo "MIMHOME has not been declared"
       else
-        if [[ ! -d $DBHOME ]]
+        if [[ ! -d $MIMHOME ]]
           then
-            mkdir -p $DBHOME
+            mkdir -p $MIMHOME
         fi
 
         for dir in ${req_dir[@]}
         do
-          if [[ -d $DBHOME/$dir ]]
+          if [[ -d $MIMHOME/$dir ]]
             then
-              echo "$dir already exists in $DBHOME"
+              echo "$dir already exists in $MIMHOME"
             else
-              echo "creating $DBHOME/$dir"
-              mkdir $DBHOME/$dir
+              echo "creating $MIMHOME/$dir"
+              mkdir $MIMHOME/$dir
             fi
         done
     fi
@@ -64,10 +64,10 @@ showtutorial()
 printf "
     This will be improved upon later but here are some basic steps:
 
-    1) export DBINSTDIR, DBHOME
-    2) run 'my' for the first time to create directories in DBHOME
-    3) put template config files in $DBHOME/templates
-    4) put MariaDB/MySQL install files (tar.gz files) in DBINSTDIR
+    1) export MIMBINARIES, MIMHOME
+    2) run 'my' for the first time to create directories in MIMHOME
+    3) put template config files in $MIMHOME/templates
+    4) put MariaDB/MySQL install files (tar.gz files) in MIMBINARIES
     5) build an instance: my build myFirstInstance 3306
     6 install the instance: my install myFirstInstance
     7) start the instance: my start myFirstInstance
@@ -237,13 +237,13 @@ drop()
 
 selectversion()
 {
-select MYVER in $DBINSTDIR/*.tar.gz;
+select MYVER in $MIMBINARIES/*.tar.gz;
 do
-    BASEDIR=${DBINSTDIR}/$(basename $MYVER .tar.gz)
+    BASEDIR=${MIMBINARIES}/$(basename $MYVER .tar.gz)
     if [[ ! -d $BASEDIR ]]
     then
       echo "$BASEDIR not found, extracting $MYVER"
-      tar -xf $MYVER -C ${DBINSTDIR}
+      tar -xf $MYVER -C ${MIMBINARIES}
     fi
     echo "Using $MYVER"
     break
@@ -282,9 +282,9 @@ then
     exit 0
 fi
 
-if [[ ! -d $DBINSTDIR ]]
+if [[ ! -d $MIMBINARIES ]]
 then
-    echo "$DBINSTDIR does not exist, aborting"
+    echo "$MIMBINARIES does not exist, aborting"
     exit 0
 else
     selecttemplate
@@ -342,19 +342,19 @@ fi
 declare -a req_dir=(configs templates data)
 ERRORCOUNTER=0
 
-if [[ -z $DBHOME ]]
+if [[ -z $MIMHOME ]]
 then
-    echo "DBHOME not defined"
+    echo "MIMHOME not defined"
     let ERRORCOUNTER+=1
 fi
 
-if [[ -z $DBINSTDIR ]]
+if [[ -z $MIMBINARIES ]]
 then
-    echo "DBHOME not defined"
+    echo "MIMHOME not defined"
     let ERRORCOUNTER+=1
-elif [[ ! -d $DBINSTDIR ]]
+elif [[ ! -d $MIMBINARIES ]]
 then
-    echo "DBINSTDIR defined, but directory does not exist"
+    echo "MIMBINARIES defined, but directory does not exist"
     let ERRORCOUNTER+=1
 fi
 
@@ -363,17 +363,17 @@ then
     echo "Errors encountred, aborting"
     exit 0
 else
-    CONFDIR=$DBHOME/configs
-    TEMPLATEDIR=$DBHOME/templates
-    if [[ ! -d $DBHOME ]]
+    CONFDIR=$MIMHOME/configs
+    TEMPLATEDIR=$MIMHOME/templates
+    if [[ ! -d $MIMHOME ]]
       then
-        echo "$DBHOME does not exist, run setup?"
+        echo "$MIMHOME does not exist, run setup?"
         select yn in "Yes" "No"; do
           case $yn in
             Yes ) firstrun
                   break
                   ;;
-            No )  echo "please create $DBHOME manually"
+            No )  echo "please create $MIMHOME manually"
                   exit 1
                   ;;
           esac
@@ -465,7 +465,7 @@ fi
 
 if [[ $1 == "drop" && $# -eq 2 ]]
 then
-    DATADIR=$DBHOME/data/$SERVERNAME
+    DATADIR=$MIMHOME/data/$SERVERNAME
     CONFIGFILE=$CONFDIR/$2.cnf
     DELDATADIR=0
     DELCONFIGFILE=0
@@ -498,7 +498,7 @@ if [[ $1 == "build" && $# -eq 3 ]]
 then
     PORT=$3
     ID=$(date '+%s')
-    DATADIR=$DBHOME/data/$SERVERNAME
+    DATADIR=$MIMHOME/data/$SERVERNAME
     TMPDIR=$DATADIR/tmp
     build
     exit 0

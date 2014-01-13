@@ -1,26 +1,30 @@
-MyDBA - simple BASH MySQL/MariaDB instance manager
+# MIM - Mini MySQL/MariaDB Instance Manager
 ==
 
-## What is this?
-A simple mysql instance manager. Mostly for testing features and running multiple instances of MySQL/MariaDB, even multiple versions.
-Comes in handy when you need to test replication features for example.
+mim is a single bash script ('my') to build and manage local installations of MySQL or MariaDB for development and testing.
+
+## Install
+
+*  Put the 'my' bash script into a directory in your path, I tend to use ~/bin
+*  Create a directory to contain the binary tar.gz files for you platform. I.e. ~/mim-binaries
+*  Create a directory to contain the database installations. I.e. ~/mim-databases
+*  Export these directories as a the relevant variable in your bash profile:
+	export MIMBINARIES=~/mim-binaries
+	export MIMHOME=~/mim-databases
 
 
-## How do I use it?
-Define the following variables:
- * export DBHOME=/path/do/dir, an empty directory to be used for configs, templates, datadir by the 'my' script.
- * export DBINSTDIR=/path/do/dir, a directory where you are keeping tar.gz files of Mysql or MariaDB
- * Finally put the 'my' script somewhere that is in your $PATH variable. I normally used ~/bin
- * running: my tutorial, has more insights!
+## First run / Setup
+*  Once the above is done, run 'my setup', this will create the required directories where $MIMHOME has been defined.
+* Copy the configs from example_configs to $MIMHOME/configs, add your own configs as necessary.
+* Download and copy binary tarballs of MySQL/MariaDB to $MIMBINARIES/ i.e. mariadb-10.0.7-linux-x86_64.tar.gz
+* You can can now run 'my' to quickly build, install, and start an instance (in that order).
 
 
 ## Future features
  * MySQL 5.6+ and MariaDB 10+ GTID management for testing failover.
  * Client path switching
- * LD_LIBRARY_path switching
+ * Library path switching for building C/C++ projects like ODBC connectors.
  * ... better documentation.
 
 
-
-
-R.I.P mysqlmanager
+_R.I.P mysqlmanager_
