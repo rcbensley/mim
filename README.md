@@ -12,15 +12,29 @@ mim is a single bash script ('my') to build and manage local installations of My
 	export MIMBINARIES=~/mim-binaries
 	export MIMHOME=~/mim-databases
 
-
-### First run / Setup
-*  Once the above is done, run 'my setup', this will create the required directories where $MIMHOME has been defined.
-* Copy the configs from example_configs to $MIMHOME/configs, add your own configs as necessary.
-* Download and copy binary tarballs of MySQL/MariaDB to $MIMBINARIES/ i.e. mariadb-10.0.7-linux-x86_64.tar.gz
-* You can can now run 'my' to quickly build, install, and start an instance (in that order).
+* With 'my' now in your path, run 'my setup', this will create directories in $MIMHOME
+* Copy the configs from example_configs to $MIMHOME/templates
 
 
-### Future features
+
+
+### Create your first instance
+* Put a binary package of MySQL or MariaDB in $MIMBINARIES:
+	$ cp ~/Downloads/mariadb-5.5.35-linux-x86_64.tar.gz $MIMBINARIES/
+	$ cp ~/Downloads/mysql-5.5.35-linux-x86_64.tar.gz $MIMBINARIES/
+
+* Create a config, we will call it master1 to run on port 3000, select options such as config and version as appropiate:
+	$ my build master1 3000
+* If the above went smoothly, then you have installed MIM correctly, now install the instance:
+	$ my install master1
+* Start the instance:
+	$ my start master1
+* Print aliases for your configured instances, to easily access them:
+	$ my aliases
+* Generate a PATH and LD_LIBRARY_PATH variables for the desired instance:
+	$ my client master1
+
+### TODO
  * MySQL 5.6+ and MariaDB 10+ GTID management for testing failover.
  * Client path switching
  * Library path switching for building C/C++ projects like ODBC connectors.
