@@ -28,15 +28,25 @@ $ cp ~/Downloads/mysql-5.5.35-linux-x86_64.tar.gz $MIMBINARIES/
 ```
 
 * Create a config, we will call it master1 to run on port 3000, select options such as config and version as appropiate:
-	$ my build master1 3000
+```bash
+$ my build master1 3000
+```
 * If the above went smoothly, then you have installed MIM correctly, now install the instance:
-	$ my install master1
+```bash
+$ my install master1
+```
 * Start the instance:
-	$ my start master1
+```bash
+$ my start master1
+```
 * Print aliases for your configured instances, to easily access them:
-	$ my aliases
+```bash
+$ my aliases
+```
 * Generate a PATH and LD_LIBRARY_PATH variables for the desired instance:
-	$ my client master1
+```bash
+$ my client master1
+```
 
 ### TODO
  * MySQL 5.6+ and MariaDB 10+ GTID management for testing failover.
