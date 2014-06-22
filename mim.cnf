@@ -1,0 +1,20 @@
+[alpha]
+type = local
+config = default
+
+[m10]
+type = local
+config = /Users/teatime/mysql/db/configs/m10.cnf
+
+[mysqlvm]
+type = remote
+hostname = mysqlvm
+port = 3306
+user = dba
+password = dba
+
+[dwh]
+type = tunnel
+tunnel_hostname = mysqlvm
+hostname = localhost
+port = 3008
