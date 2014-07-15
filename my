@@ -1,9 +1,15 @@
 #!/bin/bash
 
-# Set the following in your bash profile
-#   MIMHOME, the directory where configs, datadir, and templates will reside
-#   MIMBINARIES, the directory where all your mysql/mariadb .tar.gz files are
-#   DBSHELLNAME, optional prompt name default is 'mariadb'
+### Urr...Readme?
+# Set the following in your bash profile or preferably ~/.mim
+# MIMHOME, the directory where configs, datadir, and templates will reside
+# MIMBINARIES, the directory where all your mysql/mariadb .tar.gz files are
+# MIMROOTPASS, set a desired root password.
+# DBSHELLNAME, optional prompt name default is 'SQL'
+# MIMSECURE=0, 1=Set the root user password to $MIMROOTPASS and delete blank users. 0=Leave database defaults.
+
+### Stop reading now.
+
 
 
 firstrun()
@@ -169,7 +175,7 @@ aliases()
         SERVERSOCK=$(getvar socket $conf)
         if [[ -z $DBSHELLNAME ]]
         then
-          DBSHELLNAME="mariadb"
+          DBSHELLNAME="SQL"
         fi
         PROMPTOPT="\"${DBSHELLNAME} [\d] > \""
         printf "alias ${SERVERNAME}='mysql -P${SERVERPORT} --socket=${SERVERSOCK} --prompt=${PROMPTOPT}'\n"
@@ -341,6 +347,12 @@ fi
 ### MAIN ###
 declare -a req_dir=(configs templates data)
 ERRORCOUNTER=0
+MIMCONFIG=$HOME/.mim
+
+if [[ -e $MIMCONFIG ]]
+then
+    source $MIMCONFIG
+fi
 
 if [[ -z $MIMHOME ]]
 then
@@ -356,6 +368,11 @@ elif [[ ! -d $MIMBINARIES ]]
 then
     echo "MIMBINARIES defined, but directory does not exist"
     let ERRORCOUNTER+=1
+fi
+
+if [[ -z $MIMROOTPASS ]]
+then
+    MIMROOTPASS=""
 fi
 
 if [[ $ERRORCOUNTER -ne 0 ]]
