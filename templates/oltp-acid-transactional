@@ -1,0 +1,12 @@
+[mysqld]
+binlog_format = ROW
+sql_mode = TRADITIONAL
+innodb_flush_log_at_trx_commit = 1
+innodb_flush_method = O_DIRECT
+innodb_doublewrite = 1
+innodb_strict_mode = 1
+sync_binlog = 1
+sync_relay_log = 1
+sync_relay_log_info = 1
+sync_master_info = 1
+sync_master_info = 1

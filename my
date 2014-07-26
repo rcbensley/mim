@@ -48,19 +48,24 @@ printstatus()
 
 showhelp()
 {
-printf "help, this message
-tutorial, tsome examples
-setup, run through first run setup
-status, show installed server status
-aliases, show aliases for all instances\n
+printf " Setup:\n--
+setup\trun through first run setup
+status\tshow installed server status
+aliases\tshow aliases for all instances
+\nInstance Management:\n--
 build\t[server name] [port] create a server config
 install\t[server name] install a server from config
 drop\t[server name] drops instance datadir AND config!
 start\t[server name]
 stop\t[server name]
+all\t'[SQL Command]' send SQL to all running instances, return to STDOUT
+\nGalera Cluster:\n--
+newcluster\t[server name]
+addnode\t[server name]\t[existing node name]
+\nShell Helpers:\n--
 client\t[server name] produce path variables for your shell to STDOUT
 aliases\tproduce a list of aliases for all available instances to STDOUT
-all\t'[SQL Command]' send SQL to all running instances, return to STDOUT
+help\tthis message
 "
 exit 0
 }
@@ -115,6 +120,28 @@ start()
     BASEDIR=$(getvar basedir $CONFIGFILE)
     echo "Starting $SERVERNAME on $SERVERPORT"
     $BASEDIR/bin/mysqld_safe --defaults-file=$CONFIGFILE --ledir=$BASEDIR/bin > /tmp/$SERVERNAME.log 2>&1 &
+    sleep 2
+    cat /tmp/$SERVERNAME.log
+}
+
+newcluster()
+{
+    echo '' > /tmp/$SERVERNAME.log
+    SERVERPORT=$(getvar port $CONFIGFILE)
+    BASEDIR=$(getvar basedir $CONFIGFILE)
+    echo "Starting $SERVERNAME on $SERVERPORT"
+    $BASEDIR/bin/mysqld_safe --defaults-file=$CONFIGFILE --ledir=$BASEDIR/bin > /tmp/$SERVERNAME.log --wsrep-new-cluster 2>&1 &
+    sleep 2
+    cat /tmp/$SERVERNAME.log
+}
+
+addnode()
+{
+    echo '' > /tmp/$SERVERNAME.log
+    SERVERPORT=$(getvar port $CONFIGFILE)
+    BASEDIR=$(getvar basedir $CONFIGFILE)
+    echo "Starting $SERVERNAME on $SERVERPORT"
+    $BASEDIR/bin/mysqld_safe --defaults-file=$CONFIGFILE --ledir=$BASEDIR/bin > /tmp/$SERVERNAME.log --wsrep_cluster_address=gcomm://127.0.0.1:${MASTERPORT} 2>&1 &
     sleep 2
     cat /tmp/$SERVERNAME.log
 }
@@ -251,6 +278,20 @@ do
       echo "$BASEDIR not found, extracting $MYVER"
       tar -xf $MYVER -C ${MIMBINARIES}
     fi
+    # Check the extracted directory is the same as the basename $MYVER
+
+    if [[ ! -d $BASEDIR ]]
+    then
+	printf "\nWARNING:\n--\n${MYVER}\ndoes not match:\n${BASEDIR}\nWhich is the correct directory?\n"
+	select CORRECTDIR in $(ls -d $MIMBINARIES/*/); do
+	    if [[ -d $CORRECTDIR ]]
+	    then
+		mv $CORRECTDIR $BASEDIR
+	    fi
+	break
+	done
+    fi
+
     echo "Using $MYVER"
     break
 done
@@ -400,7 +441,7 @@ fi
 
 if [[ -z $1 ]]
 then
-    echo "No command specified"
+    #echo "No command specified"
     showhelp
     exit 0
 fi
@@ -452,6 +493,12 @@ fi
 if [[ $1 == "start" && $# -eq 2 ]]
 then
     start
+    exit 0
+fi
+
+if [[ $1 == "newcluster" && $# -eq 2 ]]
+then
+    newcluster
     exit 0
 fi
 
@@ -509,6 +556,25 @@ then
         echo "Nothing to do? Exiting ..."
         exit 0
     fi
+fi
+
+if [[ $1 == "addnode" ]]
+then
+
+    if [[ -z $2 ]]
+    then
+	echo "Missing new node name"
+	exit 0
+    elif [[ -z $3 ]]
+    then
+	echo "Missing existing node name."
+	exit 0
+    fi
+
+    MASTERCONFIGFILE=$CONFDIR/$3.cnf
+    MASTERPORT=$(getvar port $MASTERCONFIGFILE)
+    addnode
+    exit 0
 fi
 
 if [[ $1 == "build" && $# -eq 3 ]]

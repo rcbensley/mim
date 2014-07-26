@@ -1,0 +1,18 @@
+[mysqld]
+tmpdir = /tmp
+max_connect_errors = 1000000
+max_connections = 1000
+default-time-zone = '+00:00'
+skip-name-resolve
+skip-slave-start
+innodb_file_per_table = 1
+innodb_file_format = Barracuda
+query_cache_size = 0
+query_cache_type = 0
+
+##
+## RAM usage, for development on workstations and laptops
+##
+key_buffer_size = 32M # MyISAM / Aria
+innodb_buffer_pool_size = 32M
+innodb_buffer_pool_instances = 4

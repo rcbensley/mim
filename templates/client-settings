@@ -1,0 +1,13 @@
+[client]
+show-warnings
+
+[mysql]
+show-warnings
+
+[mysqldump]
+quick
+events
+comments
+routines
+triggers
+single-transaction
