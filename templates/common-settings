@@ -5,14 +5,23 @@ max_connections = 1000
 default-time-zone = '+00:00'
 skip-name-resolve
 skip-slave-start
-innodb_file_per_table = 1
-innodb_file_format = Barracuda
 query_cache_size = 0
 query_cache_type = 0
+local_infile = 1
+default_storage_engine = InnoDB
+storage_engine = InnoDB
+innodb_file_format = Barracuda
+innodb_file_per_table = 1
 
 ##
-## RAM usage, for development on workstations and laptops
+## Disk Usage settings
 ##
-key_buffer_size = 32M # MyISAM / Aria
+innodb_log_file_size = 128M
+innodb_log_files_in_group = 2
+
+##
+## RAM usage
+##
+key_buffer_size = 32M # MyISAM and Aria
 innodb_buffer_pool_size = 32M
 innodb_buffer_pool_instances = 4

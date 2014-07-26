@@ -1,4 +1,5 @@
 [mysqld]
+performance_schema = 1
 binlog_format = MIXED
 sql_mode = NO_ENGINE_SUBSTITUTION,STRICT_TRANS_TABLES
 innodb_flush_log_at_trx_commit = 0
