@@ -7,6 +7,7 @@
 # MIMROOTPASS, set a desired root password.
 # DBSHELLNAME, optional prompt name default is 'SQL'
 # MIMSECURE=0, 1=Set the root user password to $MIMROOTPASS and delete blank users. 0=Leave database defaults.
+# DEFAULTDATABASE, set the default database for connecting to a server
 
 ### Stop reading now.
 
@@ -70,26 +71,6 @@ help\tthis message
 exit 0
 }
 
-showtutorial()
-{
-printf "
-    This will be improved upon later but here are some basic steps:
-
-    1) export MIMBINARIES, MIMHOME
-    2) run 'my' for the first time to create directories in MIMHOME
-    3) put template config files in $MIMHOME/templates
-    4) put MariaDB/MySQL install files (tar.gz files) in MIMBINARIES
-    5) build an instance: my build myFirstInstance 3306
-    6 install the instance: my install myFirstInstance
-    7) start the instance: my start myFirstInstance
-    8) see the instance status: my status
-    9) access the instance: my use myFirstInstance
-    10) optionally create aliases to login with: my aliases
-    11) again optionally create PATH and profile options for this instance: my client myFirstInstance
-"
-    exit 0
-}
-
 install()
 {
     BASEDIR=$(getvar basedir $CONFIGFILE)
@@ -120,28 +101,6 @@ start()
     BASEDIR=$(getvar basedir $CONFIGFILE)
     echo "Starting $SERVERNAME on $SERVERPORT"
     $BASEDIR/bin/mysqld_safe --defaults-file=$CONFIGFILE --ledir=$BASEDIR/bin > /tmp/$SERVERNAME.log 2>&1 &
-    sleep 2
-    cat /tmp/$SERVERNAME.log
-}
-
-newcluster()
-{
-    echo '' > /tmp/$SERVERNAME.log
-    SERVERPORT=$(getvar port $CONFIGFILE)
-    BASEDIR=$(getvar basedir $CONFIGFILE)
-    echo "Starting $SERVERNAME on $SERVERPORT"
-    $BASEDIR/bin/mysqld_safe --defaults-file=$CONFIGFILE --ledir=$BASEDIR/bin > /tmp/$SERVERNAME.log --wsrep-new-cluster 2>&1 &
-    sleep 2
-    cat /tmp/$SERVERNAME.log
-}
-
-addnode()
-{
-    echo '' > /tmp/$SERVERNAME.log
-    SERVERPORT=$(getvar port $CONFIGFILE)
-    BASEDIR=$(getvar basedir $CONFIGFILE)
-    echo "Starting $SERVERNAME on $SERVERPORT"
-    $BASEDIR/bin/mysqld_safe --defaults-file=$CONFIGFILE --ledir=$BASEDIR/bin > /tmp/$SERVERNAME.log --wsrep_cluster_address=gcomm://127.0.0.1:${MASTERPORT} 2>&1 &
     sleep 2
     cat /tmp/$SERVERNAME.log
 }
@@ -441,7 +400,6 @@ fi
 
 if [[ -z $1 ]]
 then
-    #echo "No command specified"
     showhelp
     exit 0
 fi
@@ -470,12 +428,6 @@ then
     exit 0
 fi
 
-if [[ $1 == "tutorial" ]]
-then
-    showtutorial
-    exit 0
-fi
-
 if [[ -z $2 ]]
 then
     echo "Servername not specified"
@@ -493,12 +445,6 @@ fi
 if [[ $1 == "start" && $# -eq 2 ]]
 then
     start
-    exit 0
-fi
-
-if [[ $1 == "newcluster" && $# -eq 2 ]]
-then
-    newcluster
     exit 0
 fi
 
@@ -522,13 +468,42 @@ fi
 
 if [[ $1 == "all" && $# -eq 2 ]]
 then
-    DO=$2
-    do_all
+    if [[ -z $DEFAULTDATABASE ]]
+    then
+	DEFAULTDATABASE='mysql'
+    fi
+
+    MYSQLBIN=$(which mysql)
+
+    if [[ -z $MYSQLBIN ]]
+    then
+	echo "No mysql client in path"
+	if [[ $(find $MIMBINARIES/*/bin -name mysql | wc -l) -gt 0 ]]
+	then 
+	    echo "Add one of these to your path:"
+	    find $MIMBINARIES/*/bin -name mysql
+	fi
+	exit 0
+    else
+	for INSTANCEPORT in $(cat $CONFDIR/*.cnf)
+	do
+	    echo "${INSTANCEPORT}:"
+	    echo "---"
+	    $MYSQLBIN $DEFAULTDATABASE -NBe "$#"
+	    echo "---"
+	done
+    fi
     exit 0
 fi
 
 if [[ $1 == "drop" && $# -eq 2 ]]
 then
+    if [[ -z $2 ]]
+    then
+	echo "Missing instance name"
+	exit 0
+    fi
+
     DATADIR=$MIMHOME/data/$SERVERNAME
     CONFIGFILE=$CONFDIR/$2.cnf
     DELDATADIR=0
@@ -558,28 +533,21 @@ then
     fi
 fi
 
-if [[ $1 == "addnode" ]]
+if [[ $1 == "build" && $# -eq 3 ]]
 then
-
     if [[ -z $2 ]]
     then
-	echo "Missing new node name"
-	exit 0
-    elif [[ -z $3 ]]
-    then
-	echo "Missing existing node name."
+	echo "Missing instance name"
 	exit 0
     fi
 
-    MASTERCONFIGFILE=$CONFDIR/$3.cnf
-    MASTERPORT=$(getvar port $MASTERCONFIGFILE)
-    addnode
-    exit 0
-fi
-
-if [[ $1 == "build" && $# -eq 3 ]]
-then
-    PORT=$3
+    if [[ -z $3 ]]
+    then
+	echo "missing port number"
+	exit 0
+    else
+	PORT=$3
+    fi
     ID=$(date '+%s')
     DATADIR=$MIMHOME/data/$SERVERNAME
     TMPDIR=$DATADIR/tmp
