@@ -100,7 +100,7 @@ start()
     SERVERPORT=$(getvar port $CONFIGFILE)
     BASEDIR=$(getvar basedir $CONFIGFILE)
     echo "Starting $SERVERNAME on $SERVERPORT"
-    $BASEDIR/bin/mysqld_safe --defaults-file=$CONFIGFILE --ledir=$BASEDIR/bin $STARTNEWCLUSTER > /tmp/$SERVERNAME.log 2>&1 &
+    $BASEDIR/bin/mysqld_safe --defaults-file=$CONFIGFILE --ledir=$BASEDIR/bin $CLUSTERCMD > /tmp/$SERVERNAME.log 2>&1 &
     sleep 2
     cat /tmp/$SERVERNAME.log
 }
@@ -450,9 +450,23 @@ then
 	exit 0
     elif [[ $3 == "new" ]]
     then
-	STARTNEWCLUSTER="--wsrep-new-cluster"
+	CLUSTERCMD="--wsrep-new-cluster"
 	start
 	exit 0
+    elif [[ $3 == "add" ]]
+    then
+	if [[ -z $4 ]]
+	then
+		echo "Missing existing node name"	
+		exit 0
+	else
+	    	CLUSTERCONF=$CONFDIR/$4.cnf
+	    	CLUSTERPORT=$(getvar port $CLUSTERCONF)
+		CLUSTERCMD="--wsrep-cluster-address=gcom://127.0.0.1:${CLUSTERPORT}"
+		echo "Cluster node specified as ${4} using port ${CLUSTERPORT}"
+		start
+		exit 0
+	fi
     else
 	start
 	exit 0
