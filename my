@@ -451,6 +451,8 @@ then
     elif [[ $3 == "new" ]]
     then
 	STARTNEWCLUSTER="--wsrep-new-cluster"
+	start
+	exit 0
     else
 	start
 	exit 0
