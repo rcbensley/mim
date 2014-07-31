@@ -42,6 +42,18 @@ getvar()
     grep -w $1 $2 | grep -v mysqld | cut -d '=' -f 2 | tail -n 1 | tr -d ' '
 }
 
+allports()
+{
+    #declare -a ALLPORTS
+    ALLPORTS=()
+    for conf in $CONFDIR/*
+    do
+	p=$(getvar port $conf)
+	ALLPORTS+=(p)
+    done
+
+}
+
 printstatus()
 {
     printf "%-8s %4s %-8s %-20s %s %s %s\n" $1 $2 $3 $4 $5 $6 $7
@@ -49,22 +61,22 @@ printstatus()
 
 showhelp()
 {
-printf " Setup:\n--
+printf "Setup:\n--
 setup\trun through first run setup
 status\tshow installed server status
 aliases\tshow aliases for all instances
 \nInstance Management:\n--
-build\t[server name] [port] create a server config
-install\t[server name] install a server from config
-drop\t[server name] drops instance datadir AND config!
+build\t[server name]\t[port]\tcreate a server config
+install\t[server name]\tinstall a server from config
+drop\t[server name]\tdrops instance datadir AND config!
 start\t[server name]
 stop\t[server name]
-all\t'[SQL Command]' send SQL to all running instances, return to STDOUT
+all\t'[SQL Command]'\t Send SQL to all running instances, return to STDOUT
 \nGalera Cluster:\n--
-newcluster\t[server name]
-addnode\t[server name]\t[existing node name]
+start\t[server name] new\tThis starts a new cluster
+start\t[server name] add [server name]\tThis adds an instance to an existing cluster
 \nShell Helpers:\n--
-client\t[server name] produce path variables for your shell to STDOUT
+client\t[server name]\tproduce path variables for your shell to STDOUT
 aliases\tproduce a list of aliases for all available instances to STDOUT
 help\tthis message
 "
@@ -510,7 +522,7 @@ then
 	fi
 	exit 0
     else
-	for INSTANCEPORT in $(cat $CONFDIR/*.cnf)
+	for INSTANCEPORT in $(cat $CONFDIR/*.cnf | grep "^port")
 	do
 	    echo "${INSTANCEPORT}:"
 	    echo "---"
