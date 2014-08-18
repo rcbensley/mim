@@ -462,7 +462,7 @@ then
 	exit 0
     elif [[ $3 == "new" ]]
     then
-	CLUSTERCMD="--wsrep-new-cluster"
+	CLUSTERCMD='--wsrep-new-cluster --wsrep-cluster-address="gcom://"'
 	start
 	exit 0
     elif [[ $3 == "add" ]]
@@ -521,15 +521,17 @@ then
 	    find $MIMBINARIES/*/bin -name mysql
 	fi
 	exit 0
-    else
-	for INSTANCEPORT in $(cat $CONFDIR/*.cnf | grep "^port")
-	do
-	    echo "${INSTANCEPORT}:"
-	    echo "---"
-	    $MYSQLBIN $DEFAULTDATABASE -NBe "$#"
-	    echo "---"
-	done
     fi
+
+    allports # All ports are defined in $ALLPORTS
+    for INSTANCEPORT in ${ALLPORTS[@]}
+    do
+	echo "${INSTANCEPORT}:"
+	echo "---"
+	$MYSQLBIN $DEFAULTDATABASE -P $INSTANCEPORT -NBe "$#"
+	echo "---"
+    done
+
     exit 0
 fi
 
