@@ -1,0 +1,8 @@
+# INSTALL PLUGIN server_audit SONAME 'server_audit';
+# INSTALL PLUGIN CONNECT SONAME 'ha_connect';
+
+[mysqld]
+binlog_annotate_row_events = 1
+userstat = 1
+use_stat_tables = never
+log_slow_verbosity = Query_plan,explain
