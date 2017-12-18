@@ -1,5 +1,4 @@
 ## MIM - Mini MySQL/MariaDB Instance Manager
-==
 
 mim is a single bash script ('my') to build and manage local installations of MySQL or MariaDB for development and testing.
 
@@ -49,10 +48,6 @@ $ my client master1
 ```
 
 ### TODO
- * MySQL 5.6+ and MariaDB 10+ GTID management for testing failover.
- * Client path switching
- * Library path switching for building C/C++ projects like ODBC connectors.
- * ... better documentation.
-
+ * Nothing! You should probably have switched to some kind of container format by now.
 
 _R.I.P mysqlmanager_
