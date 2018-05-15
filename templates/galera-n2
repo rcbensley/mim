@@ -1,3 +1,0 @@
-[mysqld]
-wsrep_node_address = 127.0.0.1:3022
-wsrep_node_name = n2

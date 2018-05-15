@@ -1,58 +1,88 @@
-## MIM - Mini MySQL/MariaDB Instance Manager
+# MIM, MariaDB Instance Manager
+## Create and Manage mulitple MariaDB servers running in a single environment.
 ==
 
-mim is a single bash script ('my') to build and manage local installations of MySQL or MariaDB for development and testing.
+## Up and running
+Put mim in your PATH, or run ```make install```.
 
-### Install
-
-*  Put the 'my' bash script into a directory in your path, I tend to use ~/bin
-*  Create a directory to contain the binary tar.gz files for you platform. I.e. ~/mim-binaries
-*  Create a directory to contain the database installations. I.e. ~/mim-databases
-*  Export these directories as a the relevant variable in your bash profile:
+Create a home for MIM, somewhere to keep data and binaries for our MariaDB installations.
 ```bash
-export MIMBINARIES=~/mim-binaries
-export MIMHOME=~/mim-databases
+mkdir -p ${HOME}/mim/base ${HOME}/mim/data ${HOME}mim/data/configs
+export MIMHOME=${HOME}/mim
+```
+The configs directory can contain extra mysqld settings you wish to use when creating an instance.
+
+Secure it! Just for your user.
+```bash
+chmod -R 700 ${MIMHOME}
 ```
 
-* With 'my' now in your path, run 'my setup', this will create directories in $MIMHOME
-* Copy the configs from example_configs to $MIMHOME/templates
-
-
-
-
-### Create your first instance
-* Put a binary package of MySQL or MariaDB in $MIMBINARIES:
+Download a MariaDB Tarball to mim/base:
 ```bash
-$ cp ~/Downloads/mariadb-5.5.35-linux-x86_64.tar.gz $MIMBINARIES/
-$ cp ~/Downloads/mysql-5.5.35-linux-x86_64.tar.gz $MIMBINARIES/
+DOWNLOAD_URL="https://downloads.mariadb.org/interstitial/mariadb-10.2.14/bintar-linux-x86_64/mariadb-10.2.14-linux-x86_64.tar.gz"
+cd $MIMHOME/base && curl -L -O ${DOWNLOAD_URL}
 ```
 
-* Create a config, we will call it master1 to run on port 3000, select options such as config and version as appropiate:
-```bash
-$ my build master1 3000
+Create a basic config for custom options
 ```
-* If the above went smoothly, then you have installed MIM correctly, now install the instance:
-```bash
-$ my install master1
-```
-* Start the instance:
-```bash
-$ my start master1
-```
-* Print aliases for your configured instances, to easily access them:
-```bash
-$ my aliases
-```
-* Generate a PATH and LD_LIBRARY_PATH variables for the desired instance:
-```bash
-$ my client master1
-```
+ echo -e "[mysqld]\nsql_mode = TRADITIONAL\nsync_binlog = 1" > ${MIMHOME}/configs/simple.cnf
+ ```
 
-### TODO
- * MySQL 5.6+ and MariaDB 10+ GTID management for testing failover.
- * Client path switching
- * Library path switching for building C/C++ projects like ODBC connectors.
- * ... better documentation.
+We are now ready to create an instance, or two, or twelve!
+
+Build and install the instance.
+```mim build master1 3000```
+```mim install master1```
+
+Building creates a config and directories in ```${MIMHOME}/data/master1```.
+The install command has extracted the Tarball in ```${MIMHOME}/base```, and used the config and directories created by the build command to run mysql_install_db in ```${MIMHOME}/data/master1```.
+
+Start the database server.
+```mim start master1```
+
+Is it running?
+```mim status master1```
+
+Login!
+```mim go master1```
 
 
+## Extras
+Secure the instance, similar to mysql_secure_installation:
+```mim secure master1```
+
+Add timezones from your system:
+```mim tz master1```
+
+Generate aliases for your shell:
+```mim alias master1```
+
+## Using a custom config
+
+
+
+## FAQ
+
+* Why not mysqlsandbox	?
+Mim focuses only on MariaDB. There are some handy features which make
+
+* Why Scheme?
+It's cool!
+
+* What about replication tooling?
+Look else where traveller.
+
+* Can I use this in production?
+Sure. Like any production database, you will still need monitoring and alerting, not provided by mim.
+Mim's goal is to simply configure, start, stop multiple instances on a single server.
+Unlike the default scripts used for init.d or systemd, there is no guessing or testing for empty/unset variables, Mim specifcally sets everything we need start a database server and it's relevant logging.
+
+
+* Why not just use docker, kubernetes, etc.
+Not all of us are using Linux (some of us are using jails and zones).
+The main advantage of mim, is to not introduce anything too crazy or different to any environment.
+Mim is a single file command line tool, which requires some directories with appropriate permissions.
+Introducing new YUM or APT repositories into a managed environemnt can be a political and security minefield.
+
+==
 _R.I.P mysqlmanager_

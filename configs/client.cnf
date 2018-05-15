@@ -1,8 +1,10 @@
 [client]
 show-warnings
+default-character-set = utf8
 
 [mysql]
 show-warnings
+default-character-set = utf8
 
 [mysqldump]
 quick
