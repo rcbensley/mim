@@ -1,20 +1,20 @@
+#!/usr/bin/env sbcl --script
 
-(define config)
+(defun config)
 
+(defun build)
 
-(define build)
+(defun install)
 
-(define install)
+(defun start)
 
-(define start)
+(defun stop)
 
-(define stop)
+(defun kill)
 
-(define kill)
+(defun status)
 
-(define status)
-
-(define secure)
+(defun secure)
 ; DROP DATABASE IF EXISTS test;
 ; DELETE FROM mysql.db WHERE Db='test' OR Db='test\\_%';
 ; DELETE FROM mysql.user WHERE user = '';

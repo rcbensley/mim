@@ -1,5 +1,5 @@
 # MIM, MariaDB Instance Manager
-## Create and Manage mulitple MariaDB servers running in a single environment.
+## Create and Manage mulitple MariaDB servers running on a single environment.
 ==
 
 ## Up and running
@@ -57,32 +57,39 @@ Add timezones from your system:
 Generate aliases for your shell:
 ```mim alias master1```
 
-## Using a custom config
-
-
-
 ## FAQ
+* What does Mim do again?
+Configure, start, and stop multiple MariaDB databases on a single server.
 
-* Why not mysqlsandbox	?
-Mim focuses only on MariaDB. There are some handy features which make
+* Why not mysqlsandbox?
+Mim focuses only on MariaDB, and abuses a few MariaDB features like 'SHUTDOWN' and socket authentication.
 
-* Why Scheme?
-It's cool!
+* Why not mysqlmanager?
+It's dead Jim.
 
-* What about replication tooling?
-Look else where traveller.
+* Why not docker, kubernetes, etc.
+Not all of us are using Linux.
+Not all of us are floating in the clouds.
+Some of us are using jails, cgroups, zones, and even PowerVM.
 
 * Can I use this in production?
 Sure. Like any production database, you will still need monitoring and alerting, not provided by mim.
-Mim's goal is to simply configure, start, stop multiple instances on a single server.
-Unlike the default scripts used for init.d or systemd, there is no guessing or testing for empty/unset variables, Mim specifcally sets everything we need start a database server and it's relevant logging.
+Mim has it's own log (```${MIMHOME}/log```), and of course each database instance has it's own mysqld error log file, e.g. ```${MIMHOME}/data/${INSTANCE_NAME}/error.log```.
 
+* So Why Mim?
+The main advantage of Mim, is to not introduce anything too crazy or different to any environment.
+Mim is a single binary.
+In some restricted production environments this is very useful.
 
-* Why not just use docker, kubernetes, etc.
-Not all of us are using Linux (some of us are using jails and zones).
-The main advantage of mim, is to not introduce anything too crazy or different to any environment.
-Mim is a single file command line tool, which requires some directories with appropriate permissions.
-Introducing new YUM or APT repositories into a managed environemnt can be a political and security minefield.
+* What did you use to write and compile mim?
+Vim with lisp mode (```set lisp```), and sbcl.
 
-==
-_R.I.P mysqlmanager_
+* What about replication tooling?
+Look else where traveller. I will be taking a look at this in the future.
+
+# ToDo
+* Replication management and monitoring interface?
+	* Multi-source replication.
+	* Galera?
+* MariaDB ColumnStore management.
+
