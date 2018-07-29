@@ -48,6 +48,6 @@ $ my client master1
 ```
 
 ### TODO
- * Nothing! You should probably have switched to some kind of container format by now.
+ * Nothing? There is a v2 branch in development using Python. I think Docker, Vagrant, or similar, are a better choices nowadays. Not everyone has access to such things in production. So the bash v1 branch is more suitable for most people
 
 _R.I.P mysqlmanager_
